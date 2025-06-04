@@ -3,107 +3,107 @@ A Node-RED node to interact with Siemens S7 PLCs.
 
 This node was created as part of the [ST-One](https://st-one.io) project.
 
-## 更新日志
+## Update Log
 
 ### v3.4.0
 
-- `s7-out` 节点增加 `已重写次数` 的输出
+- `s7-out` node adds `rewrite count` output
 
-- `s7-out` 节点修复 `数据残留导致重写失败` 的问题
+- `s7-out` node fixes `data residue causing rewrite failure` issue
 
 ### v3.3.1
 
-- `s7-out` 节点重构 `失败重写` 的逻辑
+- `s7-out` node refactors `failure rewrite` logic
 
 ```bash
-改前：写入数据->读取最新值->判断是否成功->等待间隔时间->重试写入数据
-改后：写入数据->等待间隔时间->读取最新值->判断是否成功->重试写入数据
+Before: Write data -> Read latest values -> Check if successful -> Wait interval time -> Retry write data
+After: Write data -> Wait interval time -> Read latest values -> Check if successful -> Retry write data
 ```
 
-- `s7-out` 节点重构 `async-await` 的语法
+- `s7-out` node refactors `async-await` syntax
 
 ### v3.3.0
 
-- `s7-endpoint` 节点增加 `失败重写` 的配置
+- `s7-endpoint` node adds `failure rewrite` configuration
 
   ```bash
-  注意！
-  应与PLC开发人员约定：如果要重置数据，则数据必须至少保留3秒再重置，避免写入数据后立即重置而导致程序认为写入数据失败
+  Note!
+  Agreement with PLC developers: If data needs to be reset, it must be kept for at least 3 seconds before reset to avoid immediate reset after writing data which causes the program to think data writing failed
   ```
 
   ```bash
-  失败重写次数：该参数大于0时，当写入数据失败后，会自动重试写入数据，直至达到该次数限制
+  Failure rewrite count: When this parameter is greater than 0, if data writing fails, it will automatically retry writing data until reaching this count limit
 
-  失败重写间隔：重试写入数据的时间间隔
+  Failure rewrite interval: Time interval for retrying data writing
   ```
 
-- `s7-in` 节点重构 `msg` 的输出
+- `s7-in` node refactors `msg` output
 
   ```json
   {
-    // s7 节点参数
+    // s7 node parameters
     "_s7": {
-      "plc": "7#-8#",                       // plc 名称
+      "plc": "7#-8#",                       // plc name
       "ip": "172.19.21.70",                 // plc ip
-      "status": "在线",                     // plc 状态 [在线/离线]
-      "time": "2024-07-26T02:15:38.128Z"    // msg 消息时间
+      "status": "online",                   // plc status [online/offline]
+      "time": "2024-07-26T02:15:38.128Z"    // msg message time
     },
 
-    // msg 消息内容
+    // msg message content
     "payload": { "a":1, "b":2 }
   }
   ```
 
-- `s7-out` 节点重构 `msg` 的输出
+- `s7-out` node refactors `msg` output
 
   ```json
   {
-    // s7 节点参数
+    // s7 node parameters
     "_s7": {
-      "plc": "7#-8#",                       // plc 名称
+      "plc": "7#-8#",                       // plc name
       "ip": "172.19.21.70",                 // plc ip
-      "status": "在线",                     // plc 状态 [在线/离线]
-      "time": "2024-07-26T02:15:38.128Z"    // msg 消息时间
+      "status": "online",                   // plc status [online/offline]
+      "time": "2024-07-26T02:15:38.128Z"    // msg message time
     },
 
-    // msg 消息内容
+    // msg message content
     "payload": {
-      "variable": ["a", "b"],               // 写入的键 msg.variable
-      "payload": [1, 2],                    // 写入的值 msg.payload
-      "values": { "a":1, "b":2 },           // 写入的键值对
-      "newValues": {},                      // plc的最新键值对
-      "wrongValues": {},                    // 跟写入值不一致的键值对
-      "bingo": false,                       // 是否写入成功 [plc的最新值跟写入值是否一致]
-      "error": "Error: Not connected"       // 错误
+      "variable": ["a", "b"],               // written key msg.variable
+      "payload": [1, 2],                    // written value msg.payload
+      "values": { "a":1, "b":2 },           // written key-value pairs
+      "newValues": {},                      // latest PLC key-value pairs
+      "wrongValues": {},                    // key-value pairs inconsistent with written values
+      "bingo": false,                       // whether write was successful [whether PLC latest values match written values]
+      "error": "Error: Not connected"       // error
     }
   }
   ```
 
-- `s7` 所有节点增加 `简体中文` 的翻译
+- All `s7` nodes add `Simplified Chinese` translation
 
 ### v3.2.0
 
-- `s7-in` 节点增加 `设备状态` 的输出
+- `s7-in` node adds `device status` output
 
   ```json
   {
-        "name": "7#-8#",       // plc 名称
+        "name": "7#-8#",       // plc name
         "ip": "172.19.21.70",  // plc ip
-        "status": "online"     // plc 状态 online / offline
+        "status": "online"     // plc status online / offline
   }
   ```
 
-- `s7-out` 节点增加 `写入结果` 的输出
+- `s7-out` node adds `write result` output
 
   ```json
   {
-        "error": "Error: Not connected", // 错误
-        "variable": ["a", "b"],          // 写入的键 msg.variable
-        "payload": [1, 2],               // 写入的值 msg.payload
-        "values": { "a":1, "b":2 },      // 写入的键值对
-        "newValues": {},                 // plc的最新键值对
-        "bingo": false,                  // plc的最新值跟写入值是否一致
-        "wrongValues": {}                // 跟写入值不一致的键值对
+        "error": "Error: Not connected", // error
+        "variable": ["a", "b"],          // written key msg.variable
+        "payload": [1, 2],               // written value msg.payload
+        "values": { "a":1, "b":2 },      // written key-value pairs
+        "newValues": {},                 // latest PLC key-value pairs
+        "bingo": false,                  // whether PLC latest values match written values
+        "wrongValues": {}                // key-value pairs inconsistent with written values
   }
   ```
 

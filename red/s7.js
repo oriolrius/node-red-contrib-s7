@@ -13,7 +13,7 @@ function nrInputShim(node, fn) {
 }
 
 /**
- * Compares values for equality, includes special handling for arrays. Fixes #33
+ * Compares two values for equality, includes special handling for arrays. Fixes #33
  * @param {number|string|Array|Date} a
  * @param {number|string|Array|Date} b 
  */
@@ -235,7 +235,7 @@ module.exports = function (RED) {
                 itemGroup.addItems(varKeys);
             }
             node.itemGroup = itemGroup;
-            // 🟢 Notifica el canvi
+            // Notify variable changes
             node.emit('__VARS_CHANGED__', varKeys);
         };
 
@@ -373,7 +373,7 @@ module.exports = function (RED) {
             itemGroup.addItems(varKeys);
         }
 
-        // 将字段加入s7 endpoint节点对象中
+        // Add fields to s7 endpoint node object
         node.itemGroup = itemGroup;
         node.rewritetimes = parseInt(config.rewritetimes);
         node.rewriteinterval = parseInt(config.rewriteinterval);
@@ -401,7 +401,7 @@ module.exports = function (RED) {
                 _s7: {
                     plc: node.endpoint.name,
                     ip: node.endpoint.endpoint._connOptsTcp.host,
-                    status: node.endpoint.getStatus() === 'online' ? '在线' : '离线',
+                    status: node.endpoint.getStatus() === 'online' ? 'online' : 'offline',
                     time: new Date(),
                 }
             };
@@ -431,7 +431,7 @@ module.exports = function (RED) {
         function onEndpointStatus(s) {
             node.status(generateStatus(s.status, statusVal));
 
-            // 只触发 ['online', 'offline'] 的事件
+            // Only trigger ['online', 'offline'] events
             // if (!['online', 'offline'].includes(node.endpoint.getStatus())) return;
             var msg = {
                 topic: '',
@@ -439,7 +439,7 @@ module.exports = function (RED) {
                 _s7: {
                     plc: node.endpoint.name,
                     ip: node.endpoint.endpoint._connOptsTcp.host,
-                    status: node.endpoint.getStatus() === 'online' ? '在线' : '离线',
+                    status: node.endpoint.getStatus() === 'online' ? 'online' : 'offline',
                     time: new Date(),
                 }
             };
@@ -488,14 +488,14 @@ module.exports = function (RED) {
             }
         }
 
-        // 🟢 Escolta el canvi de variables
+        // Listen for variable changes
         function onVarsChanged(varKeys) {
             updateVariableListeners(varKeys);
         }
         node.endpoint.on('__VARS_CHANGED__', onVarsChanged);
         node._listeners.push({event: '__VARS_CHANGED__', fn: onVarsChanged});
 
-        // Inicialitza els listeners amb les variables actuals
+        // Initialize listeners with current variables
         updateVariableListeners(Object.keys(node.endpoint._vars || {}));
 
         node.status(generateStatus(node.endpoint.getStatus(), statusVal));
@@ -532,43 +532,43 @@ module.exports = function (RED) {
                 done: (error) => {
 
                     /**
-                     * 第一次写入数据后，会进入本函数
+                     * This function is called after the first data write
                      */
 
-                    // 写入的键
+                    // Written key
                     const variable = config.variable || msg.variable
-                    // 写入的值
+                    // Written value
                     const payload = msg.payload
-                    // 写入的键（数组）
+                    // Written keys (array)
                     const variables = Array.isArray(variable) ? variable : [variable]
-                    // 写入的值（数组）
+                    // Written values (array)
                     const payloads = Array.isArray(payload) ? payload : [payload]
 
-                    // 写入的键值对
+                    // Written key-value pairs
                     const values = {}
                     variables.forEach((key, index) => {
                         values[key] = payloads[index]
                     })
 
-                    // 调用 s7-out 后的输出消息
+                    // Output message after calling s7-out
                     msg._s7 = {
                         plc: node.endpoint.name,
                         ip: node.endpoint.endpoint._connOptsTcp.host,
-                        status: node.endpoint.getStatus() === 'online' ? '在线' : '离线',
+                        status: node.endpoint.getStatus() === 'online' ? 'online' : 'offline',
                         time: new Date(),
                     }
                     msg.payload = {
-                        variable: variable, // 写入的键
-                        payload: payload,   // 写入的值
-                        values: values,     // 写入的键值对
-                        newValues: {},      // plc的最新键值对
-                        wrongValues: {},    // 跟写入值不一致的键值对
-                        bingo: false,       // plc的最新值跟写入值是否一致
-                        error: error,       // 错误
-                        rewriteCount: 0,    // 已重写次数
+                        variable: variable, // Written key
+                        payload: payload,   // Written value
+                        values: values,     // Written key-value pairs
+                        newValues: {},      // Latest PLC key-value pairs
+                        wrongValues: {},    // Key-value pairs inconsistent with written values
+                        bingo: false,       // Whether PLC latest values match written values
+                        error: error,       // Error
+                        rewriteCount: 0,    // Number of rewrites performed
                     }
 
-                    // 处理错误 done(e) 不生效；需要使用 node.error(e)
+                    // Handle errors - done(e) doesn't work; need to use node.error(e)
                     // https://nodered.org/docs/creating-nodes/node-js#handling-errors
                     if (error) {
                         node.error(error)
@@ -576,28 +576,28 @@ module.exports = function (RED) {
                         return
                     }
 
-                    // 读取最新的值判断是否需要重写数据
+                    // Read latest values to determine if data needs to be rewritten
                     async function rewrite() {
-                        // 延时读取最新的值
+                        // Delayed reading of latest values
                         if (node.endpoint.rewritetimes && node.endpoint.rewriteinterval) await new Promise(resolve => setTimeout(resolve, node.endpoint.rewriteinterval))
                         try {
 
-                            // 清空上一次记录的数据
+                            // Clear previously recorded data
                             msg.payload.newValues = {}
                             msg.payload.wrongValues = {}
 
-                            // 读取最新的值
+                            // Read latest values
                             const newValues = await node.endpoint.itemGroup.readAllItems()
                             for (const key in newValues) {
-                                // 只匹配此次写入的变量
+                                // Only match variables written this time
                                 if (variables.includes(key)) {
-                                    // plc的最新键值对
+                                    // Latest PLC key-value pairs
                                     msg.payload.newValues[key] = newValues[key]
-                                    // 跟写入值不一致的键值对
+                                    // Key-value pairs inconsistent with written values
                                     if (newValues[key] !== values[key]) msg.payload.wrongValues[key] = newValues[key]
                                 }
                             }
-                            // 判断数据是否完全写入成功
+                            // Determine if data was completely written successfully
                             const v1 = Object.keys(msg.payload.values).length
                             const v2 = Object.keys(msg.payload.newValues).length
                             const v3 = Object.keys(msg.payload.wrongValues).length
@@ -605,14 +605,14 @@ module.exports = function (RED) {
                         } catch (e) {
                             // node.error(e)
                         }
-                        // 判断是否需要重写数据
+                        // Determine if data needs to be rewritten
                         if (!msg.payload.bingo && node.endpoint.rewritetimes > msg.payload.rewriteCount) {
 
-                            // 递增已重写次数
+                            // Increment rewrite count
                             msg.payload.rewriteCount++
 
-                            // 想查看重写记录时，可以注释这句话
-                            // console.log(`[${new Date().toLocaleString()}]重写：`, msg.payload.rewriteCount, msg.payload.wrongValues, msg.payload.newValues, msg.payload.values)
+                            // Uncomment this line to view rewrite records
+                            // console.log(`[${new Date().toLocaleString()}] Rewrite:`, msg.payload.rewriteCount, msg.payload.wrongValues, msg.payload.newValues, msg.payload.values)
 
                             try {
                                 await node.endpoint.itemGroup.writeItems(writeObj.name, writeObj.val)
@@ -620,16 +620,16 @@ module.exports = function (RED) {
                             catch (e) {
                                 // node.error(e)
                             }
-                            // 读取最新的值判断是否需要重写数据
+                            // Read latest values to determine if data needs to be rewritten
                             await rewrite()
                             return
                         }
 
-                        // 输出消息
+                        // Output message
                         node.send(msg)
                     }
 
-                    // 读取最新的值判断是否需要重写数据
+                    // Read latest values to determine if data needs to be rewritten
                     rewrite()
                 }
             };
@@ -697,13 +697,13 @@ module.exports = function (RED) {
             let func = config.function || msg.function;
             switch (func) {
                 case 'setvartable':
-                    // Esperem que msg.vartable sigui un array [{name:..., addr:...}]
+                    // Expect msg.vartable to be an array [{name:..., addr:...}]
                     if (!Array.isArray(msg.vartable) || !msg.vartable.length) {
                         done('vartable missing or invalid');
                         return;
                     }
                     node.endpoint.setVars(msg.vartable);
-                    // Torna la nova llista per sortida
+                    // Return the new list for output
                     msg.payload = {vartable: msg.vartable};
                     send(msg);
                     done();
