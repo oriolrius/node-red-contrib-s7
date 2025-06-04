@@ -33,7 +33,8 @@
             },
             "function": {
                 "cycletime": "Cycle time",
-                "trigger": "Trigger read"
+                "trigger": "Trigger read",
+                "setvartable": "设置变量表"
             }
         },
         "endpoint": {

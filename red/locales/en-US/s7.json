@@ -33,7 +33,8 @@
             },
             "function": {
                 "cycletime": "Cycle time",
-                "trigger": "Trigger read"
+                "trigger": "Trigger read",
+                "setvartable": "Set variable table"
             }
         },
         "endpoint": {

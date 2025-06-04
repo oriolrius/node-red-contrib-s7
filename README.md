@@ -125,14 +125,17 @@ The **S7 Control** node provides advanced control and diagnostic functions for S
 ### Supported Functions
 
 #### cycletime
+
 Updates the PLC polling interval
+
 - **Input**: `msg.payload` containing new cycle time in milliseconds
 - **Output**: Original message on success
-- **Notes**: 
+- **Notes**:
   - Minimum cycle time is 50ms (values below will be auto-adjusted)
   - Set to 0 to disable cyclic reading
 
 Example:
+
 ```json
 {
   "function": "cycletime",
@@ -141,17 +144,47 @@ Example:
 ```
 
 #### trigger
+
 Manually triggers an immediate PLC read cycle
+
 - **Input**: Any message
 - **Output**: Original message
 - **Use Case**: On-demand reading outside normal cycle
 
+#### setvartable
+
+Dynamically updates the variable table for the S7 endpoint during runtime
+
+- **Input**: `msg.vartable` containing an array of variable objects with `name` and `addr` properties
+- **Output**: `msg.payload` with confirmation object containing the new variable table
+- **Use Case**: Dynamic reconfiguration of PLC variables without stopping the flow
+- **Notes**:
+  - Existing S7 In nodes will automatically adapt to the new variable table
+  - Variable addresses must follow the standard S7 addressing scheme
+  - This function completely replaces the existing variable table
+
+Example:
+
+```json
+{
+  "function": "setvartable",
+  "vartable": [
+    {"name": "temperature", "addr": "DB1,REAL0"},
+    {"name": "pressure", "addr": "DB1,REAL4"},
+    {"name": "motor_status", "addr": "DB2,X0.0"}
+  ]
+}
+```
+
 #### ssl
+
 Retrieves SSL certificate information
+
 - **Input**: `msg.payload` containing object with `id` and `index` properties
 - **Output**: `msg.payload` with certificate data
 
 Example:
+
 ```json
 {
   "function": "ssl",
@@ -160,16 +193,21 @@ Example:
 ```
 
 #### list-blocks
+
 Lists all program blocks in PLC
+
 - **Input**: Any message
 - **Output**: `msg.payload` with block list array
 
 #### upload-block
+
 Uploads a specific program block from PLC
+
 - **Input**: `msg.payload` containing object with `type` (block type) and `number` (block number)
 - **Output**: `msg.payload` with block content
 
 Example:
+
 ```json
 {
   "function": "upload-block",
@@ -178,17 +216,147 @@ Example:
 ```
 
 #### upload-all-blocks
+
 Uploads all program blocks from PLC
+
 - **Input**: Any message
 - **Output**: `msg.payload` with array of all blocks
 
 #### all-block-info
+
 Retrieves metadata for all PLC blocks
+
 - **Input**: Any message
 - **Output**: `msg.payload` with block information objects
 
 ### Error Handling
+
 Errors are reported through Node-RED's error handling system. Successful operations pass through the original message.
+
+## Dynamic Variable Table Management
+
+The `setvartable` function provides powerful runtime reconfiguration capabilities for S7 endpoint variable tables. This feature allows you to dynamically update which PLC variables are being monitored without needing to restart Node-RED or reconfigure endpoint nodes.
+
+### How It Works
+
+1. **Variable Table Update**: The S7 Control node accepts a new variable table via `msg.vartable`
+2. **Automatic Propagation**: All S7 In nodes connected to the same endpoint automatically adapt to the new variables
+3. **Event-Driven Synchronization**: Uses the internal `__VARS_CHANGED__` event system to notify all nodes
+4. **Seamless Operation**: No interruption to existing flows or data processing
+
+### Usage Workflow
+
+1. **Prepare Variable Configuration**: Create an array of variable objects with `name` and `addr` properties
+2. **Send to S7 Control Node**: Use a function node or inject node to send the new configuration
+3. **Verify Operation**: S7 In nodes will immediately start monitoring the new variables
+4. **Monitor Changes**: Existing S7 In nodes automatically update their listeners
+
+### Practical Examples
+
+#### Example 1: Recipe-Based Variable Switching
+
+```javascript
+// Function node to switch between different recipe configurations
+var recipes = {
+    "chocolate": [
+        {"name": "temp_mixer", "addr": "DB10,REAL0"},
+        {"name": "speed_mixer", "addr": "DB10,INT4"},
+        {"name": "time_mixing", "addr": "DB10,INT6"}
+    ],
+    "vanilla": [
+        {"name": "temp_mixer", "addr": "DB11,REAL0"},
+        {"name": "speed_mixer", "addr": "DB11,INT4"},
+        {"name": "time_mixing", "addr": "DB11,INT6"}
+    ]
+};
+
+var recipe = msg.payload.recipe || "chocolate";
+msg.function = "setvartable";
+msg.vartable = recipes[recipe];
+return msg;
+```
+
+#### Example 2: Conditional Monitoring Based on Production Line
+
+```javascript
+// Dynamic variable table based on active production line
+var productionLine = msg.payload.line;
+var variables = [];
+
+switch(productionLine) {
+    case "line1":
+        variables = [
+            {"name": "conveyor_speed", "addr": "DB1,REAL0"},
+            {"name": "part_count", "addr": "DB1,DINT4"},
+            {"name": "quality_ok", "addr": "DB1,X8.0"}
+        ];
+        break;
+    case "line2":
+        variables = [
+            {"name": "conveyor_speed", "addr": "DB2,REAL0"},
+            {"name": "part_count", "addr": "DB2,DINT4"},
+            {"name": "temperature", "addr": "DB2,REAL8"}
+        ];
+        break;
+}
+
+msg.function = "setvartable";
+msg.vartable = variables;
+return msg;
+```
+
+#### Example 3: Time-Based Variable Configuration
+
+```javascript
+// Switch monitoring variables based on shift schedule
+var currentHour = new Date().getHours();
+var variables;
+
+if (currentHour >= 6 && currentHour < 14) {
+    // Day shift variables
+    variables = [
+        {"name": "operator_count", "addr": "DB100,INT0"},
+        {"name": "productivity", "addr": "DB100,REAL2"},
+        {"name": "energy_usage", "addr": "DB100,REAL6"}
+    ];
+} else if (currentHour >= 14 && currentHour < 22) {
+    // Evening shift variables
+    variables = [
+        {"name": "operator_count", "addr": "DB101,INT0"},
+        {"name": "productivity", "addr": "DB101,REAL2"},
+        {"name": "maintenance_mode", "addr": "DB101,X6.0"}
+    ];
+} else {
+    // Night shift variables (maintenance focus)
+    variables = [
+        {"name": "maintenance_active", "addr": "DB102,X0.0"},
+        {"name": "system_diagnostics", "addr": "DB102,DWORD2"},
+        {"name": "backup_systems", "addr": "DB102,X6.0"}
+    ];
+}
+
+msg.function = "setvartable";
+msg.vartable = variables;
+return msg;
+```
+
+### Important Considerations
+
+- **Variable Addresses**: All addresses must follow the standard S7 addressing scheme documented in the Variable Addressing section
+- **Complete Replacement**: The `setvartable` function completely replaces the existing variable table, not just adding to it
+- **S7 In Node Adaptation**: Existing S7 In nodes automatically adapt to new variables, but nodes configured for specific variables that no longer exist will stop receiving data
+- **Performance**: Variable table updates are immediate, but the first read cycle with new variables may take slightly longer
+- **Error Handling**: Invalid addresses or malformed variable objects will cause the operation to fail and return an error
+
+### Best Practices
+
+1. **Validate Addresses**: Always validate S7 addresses before sending to avoid runtime errors
+2. **Graceful Transitions**: Consider overlapping some variables between configurations for smooth transitions
+3. **Logging**: Log variable table changes for debugging and audit purposes
+4. **Error Recovery**: Implement fallback variable configurations in case of errors
+5. **Testing**: Test variable configurations in development before deploying to production systems
+
+This dynamic capability makes the S7 nodes extremely flexible for applications requiring runtime reconfiguration, such as multi-product manufacturing lines, recipe-based processes, or systems with changing monitoring requirements.
 
 ## Usage
 
