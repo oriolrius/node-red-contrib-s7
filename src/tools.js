@@ -34,7 +34,10 @@ class Tools {
 
     getIfaces() {
         let ifaces = os.networkInterfaces();
-        return Object.keys(ifaces).filter(v => ifaces[v][0] && !ifaces[v][0].internal)
+        return Object.keys(ifaces).filter(v => {
+            const addrList = ifaces[v];
+            return addrList && addrList.length > 0 && addrList[0] && !addrList[0].internal;
+        });
     }
 
     async listDevicesPN() {
@@ -42,13 +45,27 @@ class Tools {
 
         let proms = [];
         for (const iface of this.getIfaces()) {
-            proms.push(exec(`${pnToolsPath} discovery -o -i "${iface}"`).then(res => {return {iface, res};}));
+            proms.push(
+                exec(`${pnToolsPath} discovery -o -i "${iface}"`)
+                    .then(res => ({ iface, res }))
+                    .catch(err => ({ 
+                        iface, 
+                        error: err.message || err.toString() 
+                    }))
+            );
         }
 
         let devs = [];
         let results = await Promise.all(proms);
 
         for (const elm of results) {
+            if ('error' in elm) {
+                console.error(`Discovery failed on interface ${elm.iface}: ${elm.error}`);
+                continue;
+            }
+            
+            if (!('res' in elm)) continue;
+            
             let iface = elm.iface;
             let out = elm.res.stdout.trim().split('\n');
             if (out.length < 2) continue;
@@ -67,7 +84,10 @@ class Tools {
         }
 
         // filters out devices that don't have the "IO-Controller" (0x02) bit set
-        return devs.filter(val => (parseInt(val['Device Role']) & pnDevRoleMask));
+        return devs.filter(val => {
+            const role = val['Device Role'];
+            return role ? (parseInt(role) & pnDevRoleMask) : false;
+        });
     }
 
     async flashLedPN(mac_addr, iface) {

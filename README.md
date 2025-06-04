@@ -118,10 +118,81 @@ Alternatively, run the following command in your Node-RED user directory - typic
 NodeJS version 10 or greater and Node-RED version 1.0 or greater is required.
 
 
+## S7 Control Node
+
+The **S7 Control** node provides advanced control and diagnostic functions for Siemens S7 PLCs. It requires an S7 Endpoint configuration node and accepts input messages specifying the operation to perform.
+
+### Supported Functions
+
+#### cycletime
+Updates the PLC polling interval
+- **Input**: `msg.payload` containing new cycle time in milliseconds
+- **Output**: Original message on success
+- **Notes**: 
+  - Minimum cycle time is 50ms (values below will be auto-adjusted)
+  - Set to 0 to disable cyclic reading
+
+Example:
+```json
+{
+  "function": "cycletime",
+  "payload": 200
+}
+```
+
+#### trigger
+Manually triggers an immediate PLC read cycle
+- **Input**: Any message
+- **Output**: Original message
+- **Use Case**: On-demand reading outside normal cycle
+
+#### ssl
+Retrieves SSL certificate information
+- **Input**: `msg.payload` containing object with `id` and `index` properties
+- **Output**: `msg.payload` with certificate data
+
+Example:
+```json
+{
+  "function": "ssl",
+  "payload": {"id": 0, "index": 0}
+}
+```
+
+#### list-blocks
+Lists all program blocks in PLC
+- **Input**: Any message
+- **Output**: `msg.payload` with block list array
+
+#### upload-block
+Uploads a specific program block from PLC
+- **Input**: `msg.payload` containing object with `type` (block type) and `number` (block number)
+- **Output**: `msg.payload` with block content
+
+Example:
+```json
+{
+  "function": "upload-block",
+  "payload": {"type": "DB", "number": 1}
+}
+```
+
+#### upload-all-blocks
+Uploads all program blocks from PLC
+- **Input**: Any message
+- **Output**: `msg.payload` with array of all blocks
+
+#### all-block-info
+Retrieves metadata for all PLC blocks
+- **Input**: Any message
+- **Output**: `msg.payload` with block information objects
+
+### Error Handling
+Errors are reported through Node-RED's error handling system. Successful operations pass through the original message.
+
 ## Usage
 
 Each connection to a PLC is represented by the **S7 Endpoint** configuration node. You can configure the PLC's Address, the variables available and their addresses, and the cycle time for reading the variables.
-
 The **S7 In** node makes the variable's values available in a flow in three different modes:
 
 *   **Single variable:** A single variable can be selected from the configured variables, and a message is sent every cycle, or only when it changes if _diff_ is checked. `msg.payload` contains the variable's value and `msg.topic` has the variable's name.

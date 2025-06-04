@@ -225,6 +225,21 @@ module.exports = function (RED) {
 
         node._vars = createTranslationTable(config.vartable);
 
+        // ORC
+        node.setVars = function(newVarTable) {
+            itemGroup = new nodes7.S7ItemGroup(node.endpoint);
+            node._vars = createTranslationTable(newVarTable);
+            itemGroup.setTranslationCB(k => node._vars[k]);
+            let varKeys = Object.keys(node._vars)
+            if (varKeys && varKeys.length) {
+                itemGroup.addItems(varKeys);
+            }
+            node.itemGroup = itemGroup;
+            // 🟢 Notifica el canvi
+            node.emit('__VARS_CHANGED__', varKeys);
+        };
+
+
         node.getStatus = function getStatus() {
             return status;
         };
@@ -431,43 +446,64 @@ module.exports = function (RED) {
             node.send(msg);
         }
 
-        node.status(generateStatus(node.endpoint.getStatus(), statusVal));
-        node.endpoint.on('__STATUS__', onEndpointStatus);
+        // 🟢 Guarda les funcions d’escolta per poder-les treure després
+        node._listeners = [];
 
-        if (config.diff) {
-            switch (config.mode) {
-                case 'all-split':
-                    node.endpoint.on('__CHANGED__', onChanged);
-                    break;
-                case 'single':
-                    node.endpoint.on(config.variable, onData);
-                    break;
-                case 'all':
-                default:
-                    node.endpoint.on('__ALL_CHANGED__', onData);
-            }
-        } else {
-            switch (config.mode) {
-                case 'all-split':
-                    node.endpoint.on('__ALL__', onDataSplit);
-                    break;
-                case 'single':
-                    node.endpoint.on('__ALL__', onDataSelect);
-                    break;
-                case 'all':
-                default:
-                    node.endpoint.on('__ALL__', onData);
+        function updateVariableListeners(varKeys) {
+            // Elimina escoltes anteriors
+            node._listeners.forEach(({event, fn}) => node.endpoint.removeListener(event, fn));
+            node._listeners = [];
+
+            // Torna a afegir escoltes per les noves variables segons el mode
+            if (config.diff) {
+                switch (config.mode) {
+                    case 'all-split':
+                        node.endpoint.on('__CHANGED__', onChanged);
+                        node._listeners.push({event: '__CHANGED__', fn: onChanged});
+                        break;
+                    case 'single':
+                        node.endpoint.on(config.variable, onData);
+                        node._listeners.push({event: config.variable, fn: onData});
+                        break;
+                    case 'all':
+                    default:
+                        node.endpoint.on('__ALL_CHANGED__', onData);
+                        node._listeners.push({event: '__ALL_CHANGED__', fn: onData});
+                }
+            } else {
+                switch (config.mode) {
+                    case 'all-split':
+                        node.endpoint.on('__ALL__', onDataSplit);
+                        node._listeners.push({event: '__ALL__', fn: onDataSplit});
+                        break;
+                    case 'single':
+                        node.endpoint.on('__ALL__', onDataSelect);
+                        node._listeners.push({event: '__ALL__', fn: onDataSelect});
+                        break;
+                    case 'all':
+                    default:
+                        node.endpoint.on('__ALL__', onData);
+                        node._listeners.push({event: '__ALL__', fn: onData});
+                }
             }
         }
 
+        // 🟢 Escolta el canvi de variables
+        function onVarsChanged(varKeys) {
+            updateVariableListeners(varKeys);
+        }
+        node.endpoint.on('__VARS_CHANGED__', onVarsChanged);
+        node._listeners.push({event: '__VARS_CHANGED__', fn: onVarsChanged});
+
+        // Inicialitza els listeners amb les variables actuals
+        updateVariableListeners(Object.keys(node.endpoint._vars || {}));
+
+        node.status(generateStatus(node.endpoint.getStatus(), statusVal));
+        node.endpoint.on('__STATUS__', onEndpointStatus);
+        node._listeners.push({event: '__STATUS__', fn: onEndpointStatus});
+
         node.on('close', function (done) {
-            node.endpoint.removeListener('__ALL__', onDataSelect);
-            node.endpoint.removeListener('__ALL__', onDataSplit);
-            node.endpoint.removeListener('__ALL__', onData);
-            node.endpoint.removeListener('__ALL_CHANGED__', onData);
-            node.endpoint.removeListener('__CHANGED__', onChanged);
-            node.endpoint.removeListener('__STATUS__', onEndpointStatus);
-            node.endpoint.removeListener(config.variable, onData);
+            node._listeners.forEach(({event, fn}) => node.endpoint.removeListener(event, fn));
             done();
         });
     }
@@ -660,6 +696,18 @@ module.exports = function (RED) {
             var res;
             let func = config.function || msg.function;
             switch (func) {
+                case 'setvartable':
+                    // Esperem que msg.vartable sigui un array [{name:..., addr:...}]
+                    if (!Array.isArray(msg.vartable) || !msg.vartable.length) {
+                        done('vartable missing or invalid');
+                        return;
+                    }
+                    node.endpoint.setVars(msg.vartable);
+                    // Torna la nova llista per sortida
+                    msg.payload = {vartable: msg.vartable};
+                    send(msg);
+                    done();
+                    break;
                 case 'cycletime':
                     res = node.endpoint.updateCycleTime(msg.payload);
                     if (res) {
