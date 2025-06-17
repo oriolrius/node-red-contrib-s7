@@ -96,6 +96,28 @@ class Tools {
 
         await exec(`${pnToolsPath} flashled -i "${iface}" -t "${mac_addr}"`);
     }
+
+    /**
+     * Safely handles data that might contain circular references
+     * @param {any} data - The data to make safe
+     * @param {string} placeholder - The placeholder to use for circular references
+     * @returns {any} Safe data without circular references
+     */
+    safeCloneData(data, placeholder = '[Circular Reference]') {
+        try {
+            // Quick check for circular references using JSON.stringify
+            if (data && typeof data === 'object') {
+                JSON.stringify(data);
+            }
+            return data;
+        } catch (e) {
+            if (e.message && (e.message.includes('cyclic') || e.message.includes('circular') || e.message.includes('Converting circular'))) {
+                return placeholder;
+            } else {
+                throw e;
+            }
+        }
+    }
 }
 
 module.exports = new Tools();

@@ -225,7 +225,11 @@ module.exports = function (RED) {
         node.setVars = function(newVarTable) {
             itemGroup = new S7ItemGroup(node.endpoint);
             node._vars = createTranslationTable(newVarTable);
-            itemGroup.setTranslationCB(k => node._vars[k]);
+            
+            // Use Map to prevent circular references
+            const varMap = new Map(Object.entries(node._vars));
+            itemGroup.setTranslationCB(key => varMap.get(key));
+            
             let varKeys = Object.keys(node._vars)
             if (varKeys && varKeys.length) {
                 itemGroup.addItems(varKeys);
@@ -359,7 +363,10 @@ module.exports = function (RED) {
         }));
 
         itemGroup = new S7ItemGroup(node.endpoint);
-        itemGroup.setTranslationCB(k => node._vars[k]);
+        
+        // Safely handle variable translation using a closure to prevent circular references
+        const varMap = new Map(Object.entries(node._vars));
+        itemGroup.setTranslationCB(key => varMap.get(key));
 
         let varKeys = Object.keys(node._vars)
         if (!varKeys || !varKeys.length) {
@@ -391,9 +398,13 @@ module.exports = function (RED) {
         function sendMsg(data, key, status) {
             if (key === undefined) key = '';
             if (data instanceof Date) data = data.getTime();
+            
+            // Safely handle data that might contain circular references
+            var safeData = tools.safeCloneData(data);
+            
             var msg = {
                 topic: key,
-                payload: data,
+                payload: safeData,
                 _s7: {
                     plc: node.endpoint.name,
                     ip: node.endpoint.endpoint._connOptsTcp.host,
@@ -401,7 +412,7 @@ module.exports = function (RED) {
                     time: new Date(),
                 }
             };
-            statusVal = status !== undefined ? status : data;
+            statusVal = status !== undefined ? status : safeData;
             node.send(msg);
             node.status(generateStatus(node.endpoint.getStatus(), statusVal));
         }
@@ -412,6 +423,7 @@ module.exports = function (RED) {
 
         function onDataSplit(data) {
             Object.keys(data).forEach(function (key) {
+                // Use the utility function to safely handle each data value
                 sendMsg(data[key], key, null);
             });
         }
@@ -543,7 +555,7 @@ module.exports = function (RED) {
                     // Written key-value pairs
                     const values = {}
                     variables.forEach((key, index) => {
-                        values[key] = payloads[index]
+                        values[key] = tools.safeCloneData(payloads[index])
                     })
 
                     // Output message after calling s7-out
@@ -555,7 +567,7 @@ module.exports = function (RED) {
                     }
                     msg.payload = {
                         variable: variable, // Written key
-                        payload: payload,   // Written value
+                        payload: tools.safeCloneData(payload),   // Written value (safely handled)
                         values: values,     // Written key-value pairs
                         newValues: {},      // Latest PLC key-value pairs
                         wrongValues: {},    // Key-value pairs inconsistent with written values
