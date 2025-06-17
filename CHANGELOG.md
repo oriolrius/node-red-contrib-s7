@@ -1,3 +1,10 @@
+Version: 4.0.11
+------------
+ - **FIX**: Fixed "Class constructor S7Endpoint cannot be invoked without 'new'" error
+ - **STABILITY**: Resolved naming conflict between local S7Endpoint function and imported class
+ - **ENHANCEMENT**: Added comprehensive example flow and usage documentation
+ - **DOCUMENTATION**: Created detailed EXAMPLE-USAGE.md with PLC configuration guide
+
 Version: 4.0.10
 ------------
  - **FIX**: Resolved "Cyclic __proto__ value" TypeError that prevented module loading

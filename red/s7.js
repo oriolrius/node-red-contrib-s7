@@ -35,7 +35,7 @@ var tools = require('../src/tools.js');
 module.exports = function (RED) {
     "use strict";
 
-    var { S7Endpoint, S7ItemGroup } = require('@st-one-io/nodes7');
+    var { S7Endpoint: S7EndpointClass, S7ItemGroup } = require('@st-one-io/nodes7');
     var EventEmitter = require('events').EventEmitter;
 
     // ---------- Discovery Endpoints ----------
@@ -351,7 +351,7 @@ module.exports = function (RED) {
 
         manageStatus('offline');
 
-        node.endpoint = new S7Endpoint(connOpts);
+        node.endpoint = new S7EndpointClass(connOpts);
         node.endpoint.on('connecting', () => manageStatus('connecting'));
         node.endpoint.on('connect', onConnect);
         node.endpoint.on('disconnect', onDisconnect);

@@ -1,0 +1,383 @@
+[
+    {
+        "id": "f1",
+        "type": "tab",
+        "label": "S7 PLC Example Flow",
+        "disabled": false,
+        "info": "This flow demonstrates how to use the S7 PLC nodes to read and write data from/to a Siemens S7 PLC.\n\nSetup:\n1. Update the S7 Endpoint node with your PLC's IP address\n2. Configure the variable table with your PLC's data blocks\n3. Deploy the flow\n\nFeatures demonstrated:\n- Reading PLC data continuously\n- Writing data to PLC on button press\n- Monitoring PLC connection status\n- Using different data types (BOOL, INT, REAL)\n\nNote: Make sure your PLC is accessible and configured for Ethernet communication."
+    },
+    {
+        "id": "s7endpoint1",
+        "type": "s7 endpoint",
+        "z": "f1",
+        "transport": "iso-on-tcp",
+        "name": "My S7 PLC",
+        "address": "192.168.1.10",
+        "port": "102",
+        "rack": "0",
+        "slot": "2",
+        "cycletime": "1000",
+        "timeout": "8000",
+        "connmode": "rack-slot",
+        "localtsaphi": "01",
+        "localtsaplo": "00",
+        "remotetsaphi": "01",
+        "remotetsaplo": "00",
+        "rewritetimes": "3",
+        "rewriteinterval": "100",
+        "vartable": [
+            {
+                "addr": "DB1,X0.0",
+                "name": "motor_running"
+            },
+            {
+                "addr": "DB1,INT2",
+                "name": "temperature"
+            },
+            {
+                "addr": "DB1,REAL4",
+                "name": "speed_setpoint"
+            },
+            {
+                "addr": "DB1,X0.1",
+                "name": "alarm_active"
+            },
+            {
+                "addr": "DB1,INT8",
+                "name": "production_count"
+            }
+        ]
+    },
+    {
+        "id": "s7in1",
+        "type": "s7 in",
+        "z": "f1",
+        "endpoint": "s7endpoint1",
+        "mode": "all-split",
+        "variable": "",
+        "diff": true,
+        "name": "Read All Variables",
+        "x": 150,
+        "y": 100,
+        "wires": [
+            ["debug1", "switch1"]
+        ]
+    },
+    {
+        "id": "debug1",
+        "type": "debug",
+        "z": "f1",
+        "name": "PLC Data",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 360,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "inject1",
+        "type": "inject",
+        "z": "f1",
+        "name": "Start Motor",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "variable",
+                "v": "motor_running",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "true",
+        "payloadType": "bool",
+        "x": 130,
+        "y": 200,
+        "wires": [
+            ["s7out1"]
+        ]
+    },
+    {
+        "id": "inject2",
+        "type": "inject",
+        "z": "f1",
+        "name": "Stop Motor",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "variable",
+                "v": "motor_running",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "false",
+        "payloadType": "bool",
+        "x": 130,
+        "y": 240,
+        "wires": [
+            ["s7out1"]
+        ]
+    },
+    {
+        "id": "s7out1",
+        "type": "s7 out",
+        "z": "f1",
+        "endpoint": "s7endpoint1",
+        "variable": "motor_running",
+        "name": "Write Motor Control",
+        "x": 360,
+        "y": 220,
+        "wires": [
+            ["debug2"]
+        ]
+    },
+    {
+        "id": "debug2",
+        "type": "debug",
+        "z": "f1",
+        "name": "Write Result",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 570,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "switch1",
+        "type": "switch",
+        "z": "f1",
+        "name": "Filter Temperature",
+        "property": "topic",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "temperature",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 370,
+        "y": 140,
+        "wires": [
+            ["gauge1"]
+        ]
+    },
+    {
+        "id": "gauge1",
+        "type": "ui_gauge",
+        "z": "f1",
+        "name": "Temperature Gauge",
+        "group": "group1",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Temperature (°C)",
+        "label": "°C",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "100",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "30",
+        "seg2": "70",
+        "className": "",
+        "x": 580,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "inject3",
+        "type": "inject",
+        "z": "f1",
+        "name": "Set Speed 75%",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "variable",
+                "v": "speed_setpoint",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "75.5",
+        "payloadType": "num",
+        "x": 140,
+        "y": 300,
+        "wires": [
+            ["s7out2"]
+        ]
+    },
+    {
+        "id": "s7out2",
+        "type": "s7 out",
+        "z": "f1",
+        "endpoint": "s7endpoint1",
+        "variable": "speed_setpoint",
+        "name": "Write Speed",
+        "x": 340,
+        "y": 300,
+        "wires": [
+            ["debug3"]
+        ]
+    },
+    {
+        "id": "debug3",
+        "type": "debug",
+        "z": "f1",
+        "name": "Speed Write",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 510,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "s7control1",
+        "type": "s7 control",
+        "z": "f1",
+        "endpoint": "s7endpoint1",
+        "function": "cycletime",
+        "name": "Control Cycle Time",
+        "x": 350,
+        "y": 380,
+        "wires": [
+            ["debug4"]
+        ]
+    },
+    {
+        "id": "inject4",
+        "type": "inject",
+        "z": "f1",
+        "name": "Fast Cycle (500ms)",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "500",
+        "payloadType": "num",
+        "x": 150,
+        "y": 360,
+        "wires": [
+            ["s7control1"]
+        ]
+    },
+    {
+        "id": "inject5",
+        "type": "inject",
+        "z": "f1",
+        "name": "Slow Cycle (2000ms)",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "2000",
+        "payloadType": "num",
+        "x": 150,
+        "y": 400,
+        "wires": [
+            ["s7control1"]
+        ]
+    },
+    {
+        "id": "debug4",
+        "type": "debug",
+        "z": "f1",
+        "name": "Cycle Control",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 570,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "comment1",
+        "type": "comment",
+        "z": "f1",
+        "name": "S7 PLC Communication Example",
+        "info": "This flow demonstrates the basic usage of S7 PLC nodes:\n\n1. **S7 Endpoint**: Defines connection to PLC\n   - IP: 192.168.1.10 (change to your PLC's IP)\n   - Rack: 0, Slot: 2 (typical for CPU)\n   - Variables defined in table\n\n2. **S7 In**: Reads data from PLC\n   - Mode: all-split (each variable as separate message)\n   - Diff: true (only send when values change)\n\n3. **S7 Out**: Writes data to PLC\n   - Can specify variable in node or via msg.variable\n\n4. **S7 Control**: Controls PLC communication\n   - Change cycle time dynamically\n   - Trigger manual reads\n\n**Variable Table:**\n- motor_running (DB1,X0.0) - Boolean\n- temperature (DB1,INT2) - Integer  \n- speed_setpoint (DB1,REAL4) - Real\n- alarm_active (DB1,X0.1) - Boolean\n- production_count (DB1,INT8) - Integer",
+        "x": 200,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "group1",
+        "type": "ui_group",
+        "name": "PLC Monitor",
+        "tab": "tab1",
+        "order": 1,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "tab1",
+        "type": "ui_tab",
+        "name": "S7 PLC Dashboard",
+        "icon": "dashboard",
+        "order": 1,
+        "disabled": false,
+        "hidden": false
+    }
+]
