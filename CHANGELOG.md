@@ -1,3 +1,8 @@
+Version: 4.0.9
+------------
+ - **FIX**: Updated package-lock.json to properly include @st-one-io/nodes7 dependency
+ - **MAINTENANCE**: Synchronized lock file with dependency changes
+
 Version: 4.0.8
 ------------
  - **FIX**: Fixed "TypeError: nodes7.S7Endpoint is not a constructor" by updating to @st-one-io/nodes7
