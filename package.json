@@ -14,7 +14,12 @@
         "url": "https://github.com/oriolrius/node-red-contrib-s7/issues"
     },
     "scripts": {
-        "publish": "npm publish"
+        "publish": "npm publish",
+        "release": "./scripts/release.sh",
+        "release:patch": "./scripts/release.sh patch",
+        "release:minor": "./scripts/release.sh minor",
+        "release:major": "./scripts/release.sh major",
+        "version:check": "npm version --dry-run"
     },
     "publishConfig": {
         "registry": "https://registry.npmjs.org"
