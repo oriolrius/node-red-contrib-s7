@@ -142,8 +142,9 @@ module.exports = function (RED) {
     }
 
     function S7Endpoint(config) {
-        EventEmitter.call(this);
+        RED.nodes.createNode(this, config);
         var node = this;
+        
         var oldValues = {};
         var status;
         var readInProgress = false;
@@ -151,8 +152,6 @@ module.exports = function (RED) {
         var connected = false;
         var currentCycleTime = config.cycletime;
         var transport = config.transport || 'iso-on-tcp';
-
-        RED.nodes.createNode(this, config);
 
         //avoids warnings when we have a lot of S7In nodes
         this.setMaxListeners(0);
@@ -226,9 +225,8 @@ module.exports = function (RED) {
             itemGroup = new S7ItemGroup(node.endpoint);
             node._vars = createTranslationTable(newVarTable);
             
-            // Use Map to prevent circular references
-            const varMap = new Map(Object.entries(node._vars));
-            itemGroup.setTranslationCB(key => varMap.get(key));
+            // Use a simple function to prevent circular references
+            itemGroup.setTranslationCB(key => node._vars[key]);
             
             let varKeys = Object.keys(node._vars)
             if (varKeys && varKeys.length) {
@@ -364,9 +362,8 @@ module.exports = function (RED) {
 
         itemGroup = new S7ItemGroup(node.endpoint);
         
-        // Safely handle variable translation using a closure to prevent circular references
-        const varMap = new Map(Object.entries(node._vars));
-        itemGroup.setTranslationCB(key => varMap.get(key));
+        // Safely handle variable translation using a simple function to prevent circular references
+        itemGroup.setTranslationCB(key => node._vars[key]);
 
         let varKeys = Object.keys(node._vars)
         if (!varKeys || !varKeys.length) {
@@ -381,7 +378,11 @@ module.exports = function (RED) {
         node.rewritetimes = parseInt(config.rewritetimes);
         node.rewriteinterval = parseInt(config.rewriteinterval);
     }
-    RED.nodes.registerType("s7 endpoint", S7Endpoint);
+    // Create a clean constructor function to avoid prototype issues
+    function S7EndpointClean(config) {
+        return S7Endpoint.call(this, config);
+    }
+    RED.nodes.registerType("s7 endpoint", S7EndpointClean);
 
     // ---------- S7 In ----------
 
@@ -407,7 +408,7 @@ module.exports = function (RED) {
                 payload: safeData,
                 _s7: {
                     plc: node.endpoint.name,
-                    ip: node.endpoint.endpoint._connOptsTcp.host,
+                    ip: node.endpoint.endpoint && node.endpoint.endpoint._connOptsTcp ? node.endpoint.endpoint._connOptsTcp.host : 'unknown',
                     status: node.endpoint.getStatus() === 'online' ? 'online' : 'offline',
                     time: new Date(),
                 }
@@ -446,7 +447,7 @@ module.exports = function (RED) {
                 payload: {},
                 _s7: {
                     plc: node.endpoint.name,
-                    ip: node.endpoint.endpoint._connOptsTcp.host,
+                    ip: node.endpoint.endpoint && node.endpoint.endpoint._connOptsTcp ? node.endpoint.endpoint._connOptsTcp.host : 'unknown',
                     status: node.endpoint.getStatus() === 'online' ? 'online' : 'offline',
                     time: new Date(),
                 }
@@ -561,7 +562,7 @@ module.exports = function (RED) {
                     // Output message after calling s7-out
                     msg._s7 = {
                         plc: node.endpoint.name,
-                        ip: node.endpoint.endpoint._connOptsTcp.host,
+                        ip: node.endpoint.endpoint && node.endpoint.endpoint._connOptsTcp ? node.endpoint.endpoint._connOptsTcp.host : 'unknown',
                         status: node.endpoint.getStatus() === 'online' ? 'online' : 'offline',
                         time: new Date(),
                     }

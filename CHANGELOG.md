@@ -1,3 +1,10 @@
+Version: 4.0.10
+------------
+ - **FIX**: Resolved "Cyclic __proto__ value" TypeError that prevented module loading
+ - **STABILITY**: Fixed constructor prototype chain issues in S7Endpoint node
+ - **ENHANCEMENT**: Improved error handling and added safe data cloning for circular references
+ - **TESTING**: Added comprehensive test suite for module loading and registration
+
 Version: 4.0.9
 ------------
  - **FIX**: Updated package-lock.json to properly include @st-one-io/nodes7 dependency

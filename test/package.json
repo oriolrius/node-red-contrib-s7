@@ -1,0 +1,19 @@
+{
+  "name": "s7-module-tests",
+  "version": "1.0.0",
+  "description": "Test suite for @oriolrius/node-red-contrib-s7",
+  "main": "test-module.js",
+  "scripts": {
+    "test": "node test-module.js",
+    "test:verbose": "DEBUG=* node test-module.js"
+  },
+  "dependencies": {
+    "node-red": "^3.0.0"
+  },
+  "devDependencies": {
+    "mocha": "^10.0.0",
+    "chai": "^4.3.0"
+  },
+  "author": "Test Suite",
+  "license": "GPL-3.0-or-later"
+}
