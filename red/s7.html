@@ -1444,9 +1444,13 @@ Result:
 		<dt>Function<span class="property-type">setvartable</span></dt>
 		<dd>
 			<strong>Purpose:</strong> Replace the entire variable table at runtime<br>
-			<strong>Input:</strong> <code>msg.vartable</code> = array of variable objects<br>
-			<strong>Format:</strong> <code>[{name: "var1", addr: "DB1,X0.0"}, {name: "var2", addr: "DB1,INT2"}]</code><br>
-			<strong>Use case:</strong> Recipe-based variable sets, conditional monitoring
+			<strong>Input Options:</strong>
+			<ul>
+				<li><strong>Array format:</strong> <code>msg.vartable</code> = <code>[{name: "var1", addr: "DB1,X0.0"}]</code></li>
+				<li><strong>Text format (NEW):</strong> <code>msg.payload</code> = <code>"DB1,X0.0;motor_running\nDB1,INT2;temperature"</code></li>
+			</ul>
+			<strong>Text Format:</strong> One variable per line, format: <code>address;name</code><br>
+			<strong>Use case:</strong> Recipe-based variable sets, conditional monitoring, easy copy-paste from spreadsheets
 		</dd>
 	</dl>
 
@@ -1509,7 +1513,7 @@ Stop automatic reading:
 Configuration:
 • Function: Set Variable Table
 
-Recipe A variables:
+Method 1 - Array format (legacy):
 {
   "vartable": [
     {"name": "temp_setpoint", "addr": "DB10,REAL0"},
@@ -1518,13 +1522,18 @@ Recipe A variables:
   ]
 }
 
-Recipe B variables:
+Method 2 - Text format (NEW - easy copy-paste):
 {
-  "vartable": [
-    {"name": "conveyor_speed", "addr": "DB20,REAL0"},
-    {"name": "package_count", "addr": "DB20,INT4"},
-    {"name": "quality_check", "addr": "DB20,X8.0"}
-  ]
+  "payload": "DB10,REAL0;temp_setpoint\nDB10,REAL4;pressure_limit\nDB10,INT8;mixer_speed"
+}
+
+Method 3 - Multi-line text (NEW - readable):
+{
+  "payload": `DB10,REAL0;temp_setpoint
+DB10,REAL4;pressure_limit
+DB10,INT8;mixer_speed
+DB10,X12.0;heater_on
+DB10,X12.1;alarm_active`
 }</pre>
 
 	<h4>Manual Read After Write</h4>
@@ -1548,6 +1557,39 @@ List all data blocks:
 Upload specific block:
 {"payload": {"type": "DB", "number": 1}}</pre>
 
+	<h3>🆕 Text Parsing Feature (v4.2.0)</h3>
+	<p>The <strong>setvartable</strong> function now supports text parsing, eliminating the need for external function nodes!</p>
+	
+	<h4>📝 Text Format</h4>
+	<ul>
+		<li><strong>Format:</strong> <code>address;name</code> (one variable per line)</li>
+		<li><strong>Separator:</strong> Semicolon (;) between address and name</li>
+		<li><strong>Line breaks:</strong> \n or actual line breaks</li>
+		<li><strong>Whitespace:</strong> Automatically trimmed</li>
+		<li><strong>Empty lines:</strong> Ignored</li>
+	</ul>
+	
+	<h4>📋 Copy-Paste from Excel/CSV</h4>
+	<pre style="background-color: #e8f5e8; padding: 8px; border-radius: 4px; font-size: 12px;">
+Excel/CSV format (address in column A, name in column B):
+DB1,X0.0    motor_running
+DB1,INT2    temperature  
+DB1,REAL4   speed_setpoint
+
+Copy-paste into inject node payload (change ; to tab/delimiter):
+DB1,X0.0;motor_running
+DB1,INT2;temperature
+DB1,REAL4;speed_setpoint</pre>
+
+	<h4>✨ Benefits</h4>
+	<ul>
+		<li><strong>No function node needed:</strong> Direct text input support</li>
+		<li><strong>Easy spreadsheet import:</strong> Copy-paste from Excel/CSV</li>
+		<li><strong>Human readable:</strong> Clear text format</li>
+		<li><strong>Backward compatible:</strong> Array format still works</li>
+		<li><strong>Error handling:</strong> Invalid lines are skipped</li>
+	</ul>
+
 	<h3>🎯 Best Practices</h3>
 	<ul>
 		<li><strong>Cycle time optimization:</strong> Balance responsiveness vs. system load</li>
@@ -1555,6 +1597,7 @@ Upload specific block:
 		<li><strong>Manual triggers:</strong> Use sparingly to avoid overwhelming the PLC</li>
 		<li><strong>Block operations:</strong> Test with non-critical PLCs first</li>
 		<li><strong>Error handling:</strong> Always check output messages for errors</li>
+		<li><strong>Text parsing:</strong> Use semicolon separator and validate format before deployment</li>
 	</ul>
 
 	<h3>⚡ Performance Impact</h3>
@@ -1601,7 +1644,7 @@ Upload specific block:
 		<tr style="background-color: #f0f0f0;"><th style="border: 1px solid #ddd; padding: 4px;">Function</th><th style="border: 1px solid #ddd; padding: 4px;">Required Input</th><th style="border: 1px solid #ddd; padding: 4px;">Example</th></tr>
 		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>cycletime</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>msg.payload</code> (number)</td><td style="border: 1px solid #ddd; padding: 4px;"><code>{payload: 1000}</code></td></tr>
 		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>trigger</strong></td><td style="border: 1px solid #ddd; padding: 4px;">Any message</td><td style="border: 1px solid #ddd; padding: 4px;"><code>{}</code></td></tr>
-		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>setvartable</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>msg.vartable</code> (array)</td><td style="border: 1px solid #ddd; padding: 4px;"><code>{vartable: [{name:"x", addr:"DB1,X0.0"}]}</code></td></tr>
+		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>setvartable</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>msg.vartable</code> (array) OR <code>msg.payload</code> (text)</td><td style="border: 1px solid #ddd; padding: 4px;"><code>{payload: "DB1,X0.0;motor\\nDB1,INT2;temp"}</code></td></tr>
 		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>ssl</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>msg.payload.id, msg.payload.index</code></td><td style="border: 1px solid #ddd; padding: 4px;"><code>{payload: {id: 17, index: 0}}</code></td></tr>
 		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>upload-block</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>msg.payload.type, msg.payload.number</code></td><td style="border: 1px solid #ddd; padding: 4px;"><code>{payload: {type: "DB", number: 1}}</code></td></tr>
 	</table>

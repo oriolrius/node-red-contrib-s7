@@ -1,3 +1,14 @@
+Version: 4.2.0
+------------
+ - **FEATURE**: Added built-in text parsing to S7 Control setvartable function
+ - **ENHANCEMENT**: No more need for external function nodes to parse variable tables
+ - **USABILITY**: Support for "address;name" text format in msg.payload
+ - **COMPATIBILITY**: Backward compatible with existing msg.vartable array format
+ - **CONVENIENCE**: Easy copy-paste from Excel/CSV spreadsheets
+ - **DOCUMENTATION**: Updated inline help with new text parsing examples and usage
+ - **FORMAT**: Text format supports line breaks, whitespace trimming, and empty line skipping
+ - **ERROR HANDLING**: Improved validation and error messages for both input formats
+
 Version: 4.1.0
 ------------
  - **MAJOR**: Comprehensive inline documentation overhaul for all Node-RED help panels

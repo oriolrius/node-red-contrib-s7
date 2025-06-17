@@ -706,14 +706,42 @@ module.exports = function (RED) {
             let func = config.function || msg.function;
             switch (func) {
                 case 'setvartable':
-                    // Expect msg.vartable to be an array [{name:..., addr:...}]
-                    if (!Array.isArray(msg.vartable) || !msg.vartable.length) {
-                        done('vartable missing or invalid');
+                    var vartable = [];
+                    
+                    // Check if we have a vartable array (legacy mode)
+                    if (Array.isArray(msg.vartable) && msg.vartable.length) {
+                        vartable = msg.vartable;
+                    } 
+                    // Check for text parsing mode (new feature)
+                    else if (typeof msg.payload === 'string' && msg.payload.trim()) {
+                        // Parse text format: "address;name" per line
+                        var lines = msg.payload.trim().split('\n');
+                        lines.forEach(function(line) {
+                            if (line.trim()) {
+                                var parts = line.split(';');
+                                if (parts.length === 2) {
+                                    var addr = parts[0].trim();
+                                    var name = parts[1].trim();
+                                    if (addr && name) {
+                                        vartable.push({
+                                            name: name,
+                                            addr: addr
+                                        });
+                                    }
+                                }
+                            }
+                        });
+                    }
+                    
+                    // Validate we have variables to set
+                    if (!Array.isArray(vartable) || !vartable.length) {
+                        done('vartable missing or invalid. Expected either msg.vartable array or msg.payload text format "address;name" per line');
                         return;
                     }
-                    node.endpoint.setVars(msg.vartable);
+                    
+                    node.endpoint.setVars(vartable);
                     // Return the new list for output
-                    msg.payload = {vartable: msg.vartable};
+                    msg.payload = {vartable: vartable};
                     send(msg);
                     done();
                     break;
