@@ -1,4 +1,4 @@
-# node-red-contrib-s7
+# @oriolrius/node-red-contrib-s7
 
 A Node-RED node to interact with Siemens S7 PLCs, providing comprehensive read/write capabilities and dynamic variable management.
 
@@ -39,7 +39,7 @@ A Node-RED node to interact with Siemens S7 PLCs, providing comprehensive read/w
 Install directly from the Node-RED palette manager or run the following command in your Node-RED user directory:
 
 ```bash
-npm install node-red-contrib-s7
+npm install @oriolrius/node-red-contrib-s7
 ```
 
 **Requirements:**
