@@ -36,13 +36,13 @@ NEW_VERSION=$(node -p "require('./package.json').version")
 echo "✅ Updated to version $NEW_VERSION"
 
 # Update CHANGELOG.md (you can customize this part)
-echo "📋 Please update CHANGELOG.md with the new version changes"
+echo "📋 Please update docs/CHANGELOG.md with the new version changes"
 echo "Press Enter when ready to continue..."
 read
 
 # Commit changes
 echo "💾 Committing changes..."
-git add package.json package-lock.json CHANGELOG.md
+git add package.json package-lock.json docs/CHANGELOG.md
 git commit -m "chore: bump version to $NEW_VERSION"
 
 # Create and push tag

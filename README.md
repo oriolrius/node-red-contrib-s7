@@ -55,7 +55,7 @@ npm install @oriolrius/node-red-contrib-s7
 
 ## Update Log
 
-For detailed version history and changes, see [CHANGELOG.md](CHANGELOG.md).
+For detailed version history and changes, see [CHANGELOG.md](docs/CHANGELOG.md).
 
 ## Node Types
 
@@ -162,7 +162,9 @@ Manually triggers an immediate PLC read cycle
 ```
 
 #### `setvartable`
-Dynamically updates the variable table during runtime
+Dynamically updates the variable table during runtime. Supports both array and text formats.
+
+**Array Format (Legacy):**
 ```json
 {
   "function": "setvartable",
@@ -172,6 +174,22 @@ Dynamically updates the variable table during runtime
   ]
 }
 ```
+
+**Text Format (New in v4.2.0):**
+```json
+{
+  "function": "setvartable",
+  "payload": "DB1,REAL0;temperature\nDB1,REAL4;pressure"
+}
+```
+
+**Text Format Details:**
+- Format: `address;name` (one variable per line)
+- Separator: Semicolon (`;`) between address and name
+- Line breaks: Use `\n` or actual newlines
+- Whitespace: Automatically trimmed
+- Empty lines: Ignored
+- Perfect for copy-paste from Excel/CSV files
 
 #### `ssl`
 Retrieves SSL certificate information
@@ -209,15 +227,15 @@ The `setvartable` function provides powerful runtime reconfiguration capabilitie
 
 ### How It Works
 
-1. **Variable Table Update**: The S7 Control node accepts a new variable table via `msg.vartable`
+1. **Variable Table Update**: The S7 Control node accepts a new variable table via `msg.vartable` (array format) or `msg.payload` (text format)
 2. **Automatic Propagation**: All S7 In nodes connected to the same endpoint automatically adapt to the new variables
 3. **Event-Driven Synchronization**: Uses the internal `__VARS_CHANGED__` event system to notify all nodes
 4. **Seamless Operation**: No interruption to existing flows or data processing
 
 ### Usage Workflow
 
-1. **Prepare Variable Configuration**: Create an array of variable objects with `name` and `addr` properties
-2. **Send to S7 Control Node**: Use a function node or inject node to send the new configuration
+1. **Prepare Variable Configuration**: Create either an array of variable objects (`msg.vartable`) or text format (`msg.payload`)
+2. **Send to S7 Control Node**: Use a function node, inject node, or direct text input to send the new configuration
 3. **Verify Operation**: S7 In nodes will immediately start monitoring the new variables
 4. **Monitor Changes**: Existing S7 In nodes automatically update their listeners
 
@@ -310,6 +328,43 @@ msg.vartable = variables;
 return msg;
 ```
 
+#### Example 4: Text Format for Easy Variable Management
+
+**Excel/CSV Copy-Paste Example:**
+```javascript
+// Copy variable list directly from Excel/CSV
+// Format: address;name (one per line)
+var variableList = `
+DB1,REAL0;temperature_tank1
+DB1,REAL4;pressure_line1
+DB1,X0.0;pump_running
+DB1,INT8;production_count
+DB2,REAL0;temperature_tank2
+DB2,REAL4;pressure_line2
+DB2,X0.0;valve_open
+DB2,INT8;quality_count
+`;
+
+msg.function = "setvartable";
+msg.payload = variableList.trim();
+return msg;
+```
+
+**Direct Inject Node Example:**
+```json
+{
+  "function": "setvartable",
+  "payload": "DB1,REAL0;temperature\nDB1,REAL4;pressure\nDB1,X0.0;pump_status\nDB1,INT8;counter"
+}
+```
+
+**Benefits of Text Format:**
+- No function node required for simple variable lists
+- Easy copy-paste from Excel/CSV files
+- Human-readable format
+- Automatic whitespace trimming
+- Supports both `\n` and actual line breaks
+
 ### Important Considerations
 
 - **Variable Addresses**: All addresses must follow the standard S7 addressing scheme documented in the Variable Addressing section
@@ -317,6 +372,8 @@ return msg;
 - **S7 In Node Adaptation**: Existing S7 In nodes automatically adapt to new variables, but nodes configured for specific variables that no longer exist will stop receiving data
 - **Performance**: Variable table updates are immediate, but the first read cycle with new variables may take slightly longer
 - **Error Handling**: Invalid addresses or malformed variable objects will cause the operation to fail and return an error
+- **Text Format Validation**: Text format requires `address;name` per line with exactly one semicolon separator
+- **Backward Compatibility**: Both array format (`msg.vartable`) and text format (`msg.payload`) are supported
 
 ### Best Practices
 
@@ -386,6 +443,8 @@ msg.variable = ["temp_sp", "pump_on", "speed"];  // Array of variable names
 Use the S7 Control node for advanced operations:
 
 #### Dynamic Variable Management
+
+**Array Format:**
 ```javascript
 // Switch to different monitoring configuration
 msg.function = "setvartable";
@@ -393,6 +452,24 @@ msg.vartable = [
     {"name": "new_temp", "addr": "DB2,REAL0"},
     {"name": "new_pressure", "addr": "DB2,REAL4"}
 ];
+```
+
+**Text Format (Easy copy-paste from spreadsheets):**
+```javascript
+// Same configuration using text format
+msg.function = "setvartable";
+msg.payload = "DB2,REAL0;new_temp\nDB2,REAL4;new_pressure";
+```
+
+or
+
+```javascript
+// Same configuration using text format
+msg.function = "setvartable";
+msg.payload = `
+DB2,REAL0;new_temp
+DB2,REAL4;new_pressure
+`;
 ```
 
 #### Cycle Time Control
@@ -580,7 +657,7 @@ Some addressing examples:
 
 ### Complete Example with All Node Types
 
-See the included [example flow](test/setvartable_example_flow.json:1) for a comprehensive demonstration of dynamic variable management.
+See the included [example flow](examples/example-flow.json:1) for a comprehensive demonstration of dynamic variable management.
 
 ## Acknowledgments
 
