@@ -96,358 +96,124 @@
 </script>
 
 <script type="text/x-red" data-help-name="s7 endpoint">
-	<p>Configures the connection to a PLC</p>
+	<p>🏭 <strong>Configures the connection to a Siemens S7 PLC</strong> (S7-200, S7-300, S7-400, S7-1200, S7-1500) for reading and writing data over Ethernet or serial connections.</p>
 
-	<h3>Details</h3>
-	<p>
-		The <b>Cycle time</b> configuration specifies the time interval in which
-		all variables will be read from the PLC. A value of <code>0</code> disables
-		automatic reading, and then a manual triggering is required from the 
-		<i>s7 control</i> node
-	</p>
-	<p>
-		The <b>Timeout</b> parameter sets the maximum amount of time that the PLC
-		may take to answer our requests. It may be desirable to raise this time if
-		the network is busy of it's latency is high
-	</p>
-	<p>
-		It's possible to log the PLC communication by setting the <b>Debug</b> option
-		to "On" of "Off". By default, the behavior is controlled by the <code>-v</code>
-		command-line parameter when running Node-RED
-	</p>
-	<p>
-		In the <b>Transport</b> option it is possible to select method used
-		to reach the PLC. Different connection options are available depending
-		on the selected option:
-	</p>
-	<h4><i>Ethernet (ISO-on-TCP)</i></h4>
-	<p>
-		Connects to the specified ethernet address and port number of the PLC.
-	</p>
-	<ul>
-		<li>
-			<b>Mode</b>: selects between <i>Rack/Slot</i> and <i>TSAP</i>
-			connection modes. Usually the <i>Rack/Slot</i> mode is used, except when
-			connecting to Logo devices where the only option is the <i>TSAP</i>
-			method
-		</li>
-	</ul>
-	<h4><i>MPI/PPI/DP Adapter</i></h4>
-	<p>
-		Connects to the PLC using MPI/PPI/DP Adapters available on the system. Requires
-		the installation of <code>node-red-contrib-mpi-s7</code>.
-	</p>
-	<ul>
-		<li>
-			<b>Address</b>: specifies the address on the bus of the PLC 
-			that we will communicate to.
-		</li>
-	</ul>
+	<h3>📋 Overview</h3>
+	<p>The S7 Endpoint is a <strong>configuration node</strong> that establishes and manages the connection to your PLC. All S7 In, S7 Out, and S7 Control nodes reference this endpoint to communicate with the same PLC instance.</p>
+
+	<h3>🔌 Connection Configuration</h3>
 	
+	<h4>Transport Method</h4>
+	<dl class="message-properties">
+		<dt>Ethernet (ISO-on-TCP)<span class="property-type">recommended</span></dt>
+		<dd>Standard TCP/IP connection over Ethernet - most common and reliable method</dd>
+		<dt>MPI/PPI/DP Adapter<span class="property-type">serial</span></dt>
+		<dd>Serial connection via MPI/PPI adapters (requires additional hardware and drivers)</dd>
+	</dl>
 
-	<h3>Notes on S7-1200/S7-1500</h3>
-	<p>
-		Some extra configuration may be needed on the S7-1200 and S7-1500 series
-		of PLCS in order to access their data:
-		<ul>
-			<li>
-				"Optimized block access" must be disabled for the DBs we want 
-				to access
-			</li>
-			<li>
-				In the "Protection" section of the CPU Properties, enable the 
-				"Permit access with PUT/GET" checkbox
-			</li>
-		</ul>
-	</p>
+	<h4>🌐 Ethernet Settings</h4>
+	<dl class="message-properties">
+		<dt>IP Address<span class="property-type">string</span></dt>
+		<dd>The IP address of your PLC (e.g., <code>192.168.1.10</code>). Must be reachable from Node-RED.</dd>
+		<dt>Port<span class="property-type">number</span></dt>
+		<dd>TCP port for S7 communication (default: <code>102</code> - standard S7 port)</dd>
+		<dt>Rack<span class="property-type">number</span></dt>
+		<dd>PLC rack number (usually <code>0</code> for most configurations)</dd>
+		<dt>Slot<span class="property-type">number</span></dt>
+		<dd>CPU slot number (typically <code>2</code> for most PLCs, check your hardware configuration)</dd>
+	</dl>
 
-	<h3>Variable addressing</h3>
-	<p>
-		The variables and their addresses configured on the <strong>S7 Endpoint</strong> 
-		follow a slightly different scheme than used on Step 7 or TIA Portal.
-		Here are some examples that may guide you on addressing your variables:
-	</p>
-	<style>
-		table {
-		padding: 0; }
-		table tr {
-			border-top: 1px solid #cccccc;
-			background-color: white;
-			margin: 0;
-			padding: 0; }
-			table tr:nth-child(2n) {
-			background-color: #f8f8f8; }
-			table tr th {
-			font-weight: bold;
-			border: 1px solid #cccccc;
-			text-align: left;
-			margin: 0;
-			padding: 6px 13px; }
-			table tr td {
-			border: 1px solid #cccccc;
-			text-align: left;
-			margin: 0;
-			padding: 6px 13px; }
-			table tr th :first-child, table tr td :first-child {
-			margin-top: 0; }
-			table tr th :last-child, table tr td :last-child {
-			margin-bottom: 0; }
-	</style>
-	<table>
-		<thead>
-			<tr>
-				<th>Address</th>
-				<th>Step7 equivalent</th>
-				<th>JS Data type</th>
-				<th>Description</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr>
-				<td><code>DB5,X0.1</code></td>
-				<td><code>DB5.DBX0.1</code></td>
-				<td>Boolean</td>
-				<td>Bit 1 of byte 0 of DB 5</td>
-			</tr>
-			<tr>
-				<td><code>DB23,B1</code> or <code>DB23,BYTE1</code></td>
-				<td><code>DB23.DBB1</code></td>
-				<td>Number</td>
-				<td>Byte 1 (0-255) of DB 23</td>
-			</tr>
-			<tr>
-				<td><code>DB100,C2</code> or <code>DB100,CHAR2</code></td>
-				<td><code>DB100.DBB2</code></td>
-				<td>String</td>
-				<td>Byte 2 of DB 100 as a Char</td>
-			</tr>
-			<tr>
-				<td><code>DB42,I3</code> or <code>DB42,INT3</code></td>
-				<td><code>DB42.DBW3</code></td>
-				<td>Number</td>
-				<td>Signed 16-bit number at byte 3 of DB 42</td>
-			</tr>
-			<tr>
-				<td><code>DB57,WORD4</code></td>
-				<td><code>DB57.DBW4</code></td>
-				<td>Number</td>
-				<td>Unsigned 16-bit number at byte 4 of DB 57</td>
-			</tr>
-			<tr>
-				<td><code>DB13,DI5</code> or <code>DB13,DINT5</code></td>
-				<td><code>DB13.DBD5</code></td>
-				<td>Number</td>
-				<td>Signed 32-bit number at byte 5 of DB 13</td>
-			</tr>
-			<tr>
-				<td><code>DB19,DW6</code> or <code>DB19,DWORD6</code></td>
-				<td><code>DB19.DBD6</code></td>
-				<td>Number</td>
-				<td>Unsigned 32-bit number at byte 6 of DB 19</td>
-			</tr>
-			<tr>
-				<td><code>DB21,R7</code> or <code>DB21,REAL7</code></td>
-				<td><code>DB19.DBD7</code></td>
-				<td>Number</td>
-				<td>Floating point 32-bit number at byte 7 of DB 21</td>
-			</tr>
-			<tr>
-				<td><code>DB2,S7.10</code>*</td>
-				<td>-</td>
-				<td>String</td>
-				<td>String of length 10 starting at byte 7 of DB 2</td>
-			</tr>
-			<tr>
-				<td><code>I1.0</code> or <code>E1.0</code></td>
-				<td><code>I1.0</code> or <code>E1.0</code></td>
-				<td>Boolean</td>
-				<td>Bit 0 of byte 1 of input area</td>
-			</tr>
-			<tr>
-				<td><code>Q2.1</code> or <code>A2.1</code></td>
-				<td><code>Q2.1</code> or <code>A2.1</code></td>
-				<td>Boolean</td>
-				<td>Bit 1 of byte 2 of output area</td>
-			</tr>
-			<tr>
-				<td><code>M3.2</code></td>
-				<td><code>QM3.2</code></td>
-				<td>Boolean</td>
-				<td>Bit 2 of byte 3 of memory area</td>
-			</tr>
-			<tr>
-				<td><code>IB4</code> or <code>EB4</code></td>
-				<td><code>IB4</code> or <code>EB4</code></td>
-				<td>Number</td>
-				<td>Byte 4 (0 -255) of input area</td>
-			</tr>
-			<tr>
-				<td><code>QB5</code> or <code>AB5</code></td>
-				<td><code>QB5</code> or <code>AB5</code></td>
-				<td>Number</td>
-				<td>Byte 5 (0 -255) of output area</td>
-			</tr>
-			<tr>
-				<td><code>MB6</code></td>
-				<td><code>MB6</code></td>
-				<td>Number</td>
-				<td>Byte 6 (0 -255) of memory area</td>
-			</tr>
-			<tr>
-				<td><code>IC7</code> or <code>EC7</code></td>
-				<td><code>IB7</code> or <code>EB7</code></td>
-				<td>String</td>
-				<td>Byte 7 of input area as a Char</td>
-			</tr>
-			<tr>
-				<td><code>QC8</code> or <code>AC8</code></td>
-				<td><code>QB8</code> or <code>AB8</code></td>
-				<td>String</td>
-				<td>Byte 8 of output area as a Char</td>
-			</tr>
-			<tr>
-				<td><code>MC9</code></td>
-				<td><code>MB9</code></td>
-				<td>String</td>
-				<td>Byte 9 of memory area as a Char</td>
-			</tr>
-			<tr>
-				<td><code>II10</code> or <code>EI10</code></td>
-				<td><code>IW10</code> or <code>EW10</code></td>
-				<td>Number</td>
-				<td>Signed 16-bit number at byte 10 of input area</td>
-			</tr>
-			<tr>
-				<td><code>QI12</code> or <code>AI12</code></td>
-				<td><code>QW12</code> or <code>AW12</code></td>
-				<td>Number</td>
-				<td>Signed 16-bit number at byte 12 of output area</td>
-			</tr>
-			<tr>
-				<td><code>MI14</code></td>
-				<td><code>MW14</code></td>
-				<td>Number</td>
-				<td>Signed 16-bit number at byte 14 of memory area</td>
-			</tr>
-			<tr>
-				<td><code>IW16</code> or <code>EW16</code></td>
-				<td><code>IW16</code> or <code>EW16</code></td>
-				<td>Number</td>
-				<td>Unsigned 16-bit number at byte 16 of input area</td>
-			</tr>
-			<tr>
-				<td><code>QW18</code> or <code>AW18</code></td>
-				<td><code>QW18</code> or <code>AW18</code></td>
-				<td>Number</td>
-				<td>Unsigned 16-bit number at byte 18 of output area</td>
-			</tr>
-			<tr>
-				<td><code>MW20</code></td>
-				<td><code>MW20</code></td>
-				<td>Number</td>
-				<td>Unsigned 16-bit number at byte 20 of memory area</td>
-			</tr>
-			<tr>
-				<td><code>IDI22</code> or <code>EDI22</code></td>
-				<td><code>ID22</code> or <code>ED22</code></td>
-				<td>Number</td>
-				<td>Signed 32-bit number at byte 22 of input area</td>
-			</tr>
-			<tr>
-				<td><code>QDI24</code> or <code>ADI24</code></td>
-				<td><code>QD24</code> or <code>AD24</code></td>
-				<td>Number</td>
-				<td>Signed 32-bit number at byte 24 of output area</td>
-			</tr>
-			<tr>
-				<td><code>MDI26</code></td>
-				<td><code>MD26</code></td>
-				<td>Number</td>
-				<td>Signed 32-bit number at byte 26 of memory area</td>
-			</tr>
-			<tr>
-				<td><code>ID28</code> or <code>ED28</code></td>
-				<td><code>ID28</code> or <code>ED28</code></td>
-				<td>Number</td>
-				<td>Unsigned 32-bit number at byte 28 of input area</td>
-			</tr>
-			<tr>
-				<td><code>QD30</code> or <code>AD30</code></td>
-				<td><code>QD30</code> or <code>AD30</code></td>
-				<td>Number</td>
-				<td>Unsigned 32-bit number at byte 30 of output area</td>
-			</tr>
-			<tr>
-				<td><code>MD32</code></td>
-				<td><code>MD32</code></td>
-				<td>Number</td>
-				<td>Unsigned 32-bit number at byte 32 of memory area</td>
-			</tr>
-			<tr>
-				<td><code>IR34</code> or <code>ER34</code></td>
-				<td><code>IR34</code> or <code>ER34</code></td>
-				<td>Number</td>
-				<td>Floating point 32-bit number at byte 34 of input area</td>
-			</tr>
-			<tr>
-				<td><code>QR36</code> or <code>AR36</code></td>
-				<td><code>QR36</code> or <code>AR36</code></td>
-				<td>Number</td>
-				<td>Floating point 32-bit number at byte 36 of output area</td>
-			</tr>
-			<tr>
-				<td><code>MR38</code></td>
-				<td><code>MR38</code></td>
-				<td>Number</td>
-				<td>Floating point 32-bit number at byte 38 of memory area</td>
-			</tr>
-			<tr>
-				<td><code>DB1,DT0</code></td>
-				<td><code>-</code></td>
-				<td>Date**</td>
-				<td>A timestamp in the DATE_AND_TIME format</td>
-			</tr>
-			<tr>
-				<td><code>DB1,DTZ10</code></td>
-				<td><code>-</code></td>
-				<td>Date**</td>
-				<td>A timestamp in the DATE_AND_TIME format, in UTC</td>
-			</tr>
-			<tr>
-				<td><code>DB2,DTL2</code></td>
-				<td><code>-</code></td>
-				<td>Date**</td>
-				<td>A timestamp in the DTL format</td>
-			</tr>
-			<tr>
-				<td><code>DB1,DTLZ12</code></td>
-				<td><code>-</code></td>
-				<td>Date**</td>
-				<td>A timestamp in the DTL format, in UTC</td>
-			</tr>
-			<tr>
-				<td><code>DB57,RWORD4</code></td>
-				<td><code>DB57.DBW4</code></td>
-				<td>Number</td>
-				<td>Unsigned 16-bit number at byte 4 of DB 57, interpreted as Little-Endian</td>
-			</tr>
-			<tr>
-				<td><code>DB13,RDI5</code> or <code>DB13,RDINT5</code></td>
-				<td><code>DB13.DBD5</code></td>
-				<td>Number</td>
-				<td>Signed 32-bit number at byte 5 of DB 13, interpreted as Little-Endian</td>
-			</tr>
-			<tr>
-				<td><code>MRW20</code></td>
-				<td><code>MRW20</code></td>
-				<td>Number</td>
-				<td>Unsigned 16-bit number at byte 20 of memory area, interpreted as Little-Endian</td>
-			</tr>
-		</tbody>
+	<h4>⚙️ Advanced Settings</h4>
+	<dl class="message-properties">
+		<dt>Cycle Time<span class="property-type">milliseconds</span></dt>
+		<dd>Interval for automatic reading (<code>1000ms</code> recommended). Set to <code>0</code> to disable automatic reading and use manual triggers only.</dd>
+		<dt>Timeout<span class="property-type">milliseconds</span></dt>
+		<dd>Maximum time to wait for PLC response (<code>8000ms</code> recommended for networks with high latency)</dd>
+		<dt>Rewrite Times<span class="property-type">number</span></dt>
+		<dd>Number of retry attempts for failed write operations (default: <code>3</code>)</dd>
+		<dt>Rewrite Interval<span class="property-type">milliseconds</span></dt>
+		<dd>Delay between write retry attempts (default: <code>100ms</code>)</dd>
+	</dl>
+
+	<h3>📊 Variable Table</h3>
+	<p>Define all PLC variables you want to access. Each variable requires:</p>
+	<ul>
+		<li><strong>Name:</strong> Unique identifier for the variable (used in Node-RED flows)</li>
+		<li><strong>Address:</strong> PLC memory address using the format below</li>
+	</ul>
+
+	<h4>📍 Address Format Quick Reference</h4>
+	<table style="border-collapse: collapse; width: 100%; font-size: 12px;">
+		<tr style="background-color: #f0f0f0;"><th style="border: 1px solid #ddd; padding: 4px;">Type</th><th style="border: 1px solid #ddd; padding: 4px;">Format</th><th style="border: 1px solid #ddd; padding: 4px;">Example</th><th style="border: 1px solid #ddd; padding: 4px;">Description</th></tr>
+		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>Boolean</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>DB{n},X{offset}.{bit}</code></td><td style="border: 1px solid #ddd; padding: 4px;"><code>DB1,X0.0</code></td><td style="border: 1px solid #ddd; padding: 4px;">Data Block 1, Byte 0, Bit 0</td></tr>
+		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>Integer</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>DB{n},INT{offset}</code></td><td style="border: 1px solid #ddd; padding: 4px;"><code>DB1,INT2</code></td><td style="border: 1px solid #ddd; padding: 4px;">16-bit signed integer at byte 2</td></tr>
+		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>Real</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>DB{n},REAL{offset}</code></td><td style="border: 1px solid #ddd; padding: 4px;"><code>DB1,REAL4</code></td><td style="border: 1px solid #ddd; padding: 4px;">32-bit float at byte 4</td></tr>
+		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>Double Int</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>DB{n},DINT{offset}</code></td><td style="border: 1px solid #ddd; padding: 4px;"><code>DB1,DINT8</code></td><td style="border: 1px solid #ddd; padding: 4px;">32-bit signed integer</td></tr>
+		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>Input</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>I{byte}.{bit}</code></td><td style="border: 1px solid #ddd; padding: 4px;"><code>I0.0</code></td><td style="border: 1px solid #ddd; padding: 4px;">Digital input</td></tr>
+		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>Output</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>Q{byte}.{bit}</code></td><td style="border: 1px solid #ddd; padding: 4px;"><code>Q0.1</code></td><td style="border: 1px solid #ddd; padding: 4px;">Digital output</td></tr>
+		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>Memory</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>M{byte}.{bit}</code></td><td style="border: 1px solid #ddd; padding: 4px;"><code>M10.0</code></td><td style="border: 1px solid #ddd; padding: 4px;">Memory bit</td></tr>
 	</table>
 
-	<p>*) Note that strings on the PLC uses 2 extra bytes at start for size/length of the string</p>
-	<p>**) Note that javascript's <code>Date</code> are <i>always</i> represented in UTC. Please use other nodes like <a href="https://flows.nodered.org/node/node-red-contrib-moment" target="_blank">node-red-contrib-moment</a> to properly handle type conversions</p>
+	<h3>🔧 PLC Setup Requirements</h3>
+	
+	<h4>S7-1200/1500 (TIA Portal)</h4>
+	<ol>
+		<li>Disable <strong>"Optimized block access"</strong> for data blocks you want to access</li>
+		<li>Enable <strong>"Permit access with PUT/GET communication"</strong> in CPU Protection settings</li>
+		<li>Configure Ethernet interface with static IP address</li>
+		<li>Ensure data blocks are not write-protected</li>
+	</ol>
+
+	<h4>S7-300/400 (STEP 7 Classic)</h4>
+	<ol>
+		<li>Data blocks should be created as non-optimized</li>
+		<li>Enable communication in hardware configuration</li>
+		<li>Configure Ethernet communication processor (CP343/CP443)</li>
+		<li>Set appropriate connection resources</li>
+	</ol>
+
+	<h3>🚦 Status Indicators</h3>
+	<ul>
+		<li><span style="color: green; font-size: 16px;">●</span> <strong>Online:</strong> Successfully connected and communicating</li>
+		<li><span style="color: yellow; font-size: 16px;">●</span> <strong>Connecting:</strong> Attempting to establish connection</li>
+		<li><span style="color: red; font-size: 16px;">●</span> <strong>Offline:</strong> Connection failed or lost</li>
+		<li><span style="color: orange; font-size: 16px;">●</span> <strong>Bad Values:</strong> Connected but some variables have invalid addresses</li>
+	</ul>
+
+	<h3>🛠️ Troubleshooting</h3>
+	<dl class="message-properties">
+		<dt>Connection timeout</dt>
+		<dd>• Check IP address and network connectivity<br>• Verify PLC is powered and accessible<br>• Check firewall settings on both sides</dd>
+		<dt>Variable errors</dt>
+		<dd>• Verify address format matches your PLC memory layout<br>• Check data block existence in PLC<br>• Ensure correct data type alignment</dd>
+		<dt>Permission denied</dt>
+		<dd>• Enable PUT/GET access in PLC configuration<br>• Check data block access rights<br>• Verify rack/slot numbers</dd>
+		<dt>Intermittent connection</dt>
+		<dd>• Increase timeout value<br>• Check network stability<br>• Reduce cycle time if too aggressive</dd>
+	</dl>
+
+	<h3>📈 Performance Tips</h3>
+	<ul>
+		<li><strong>Optimize cycle time:</strong> Balance between responsiveness and network load</li>
+		<li><strong>Group variables:</strong> Place related variables in the same data block for better performance</li>
+		<li><strong>Limit variable count:</strong> Too many variables can impact performance</li>
+		<li><strong>Use appropriate data types:</strong> Match PLC data types exactly to avoid conversion overhead</li>
+	</ul>
+
+	<h3>🔗 References & Examples</h3>
+	<p>📖 <strong>Complete Documentation:</strong> <a href="https://github.com/oriolrius/node-red-contrib-s7/blob/main/EXAMPLE-USAGE.md" target="_blank">GitHub Usage Guide</a></p>
+	<p>📋 <strong>Example Flow:</strong> <a href="https://github.com/oriolrius/node-red-contrib-s7/blob/main/example-flow.json" target="_blank">Sample Flow JSON</a></p>
+	<p>🔧 <strong>Issues & Support:</strong> <a href="https://github.com/oriolrius/node-red-contrib-s7/issues" target="_blank">GitHub Issues</a></p>
+	<p>📚 <strong>Full Address Reference:</strong> See detailed address table in complete documentation</p>
+
+	<h3>⚠️ Important Notes</h3>
+	<ul>
+		<li>This configuration node is shared among all S7 nodes in your flow</li>
+		<li>Changes to the endpoint configuration affect all connected nodes</li>
+		<li>Always test with non-critical PLC systems first</li>
+		<li>Monitor PLC CPU usage when using aggressive cycle times</li>
+		<li>Use a dedicated VLAN for PLC communication in production environments</li>
+	</ul>
 </script>
 
 <script type="text/javascript">
@@ -1084,49 +850,160 @@
 </script>
 
 <script type="text/x-red" data-help-name="s7 in">
-	<p>Reads data from a S7 PLC</p>
+	<p>📥 <strong>Reads data from a Siemens S7 PLC</strong> cyclically or on-demand, sending messages when values are received or change.</p>
 
-	<h3>Outputs</h3>
+	<h3>📤 Outputs</h3>
 	<dl class="message-properties">
 		<dt>payload<span class="property-type">any</span></dt>
-		<dd>
-			The value(s) as read from the PLC. The format and type of the payload
-			depends on the configured "Mode"
-		</dd>
-
+		<dd>The value(s) read from the PLC. Format depends on the selected mode (single value, object, or individual messages)</dd>
+		
 		<dt>topic<span class="property-type">string</span></dt>
-		<dd>
-			The name of the variable, when the message refers to a single variable
-			(that is, when mode is "Single Variable" or "All variables, one per
-			message")
+		<dd>The variable name when mode is "Single Variable" or "All variables, one per message"</dd>
+		
+		<dt>_s7<span class="property-type">object</span></dt>
+		<dd>Contains PLC connection metadata:
+			<ul>
+				<li><code>plc</code> - PLC endpoint name</li>
+				<li><code>ip</code> - PLC IP address</li>
+				<li><code>status</code> - Connection status (online/offline)</li>
+				<li><code>time</code> - Timestamp of reading</li>
+			</ul>
 		</dd>
 	</dl>
+
+	<h3>⚙️ Configuration</h3>
 	
-	<h3>Details</h3>
-	<p>
-		All data is read cyclically from the PLC as configured in the <i>s7 endpoint</i>, 
-		but there are three modes of making it available in a flow:
-	</p>
+	<h4>📊 Reading Modes</h4>
+	<dl class="message-properties">
+		<dt>Single Variable<span class="property-type">focused</span></dt>
+		<dd>
+			<strong>Use case:</strong> Monitor one specific variable<br>
+			<strong>Output:</strong> <code>msg.payload</code> = variable value, <code>msg.topic</code> = variable name<br>
+			<strong>Example:</strong> <code>{payload: true, topic: "motor_running"}</code>
+		</dd>
+		
+		<dt>All Variables<span class="property-type">comprehensive</span></dt>
+		<dd>
+			<strong>Use case:</strong> Get all variables in one message<br>
+			<strong>Output:</strong> <code>msg.payload</code> = object with all variables<br>
+			<strong>Example:</strong> <code>{payload: {motor_running: true, temperature: 42.5}}</code>
+		</dd>
+		
+		<dt>All Variables, One per Message<span class="property-type">individual</span></dt>
+		<dd>
+			<strong>Use case:</strong> Process each variable separately<br>
+			<strong>Output:</strong> Separate message for each variable<br>
+			<strong>Example:</strong> Multiple messages: <code>{payload: true, topic: "motor_running"}</code>, <code>{payload: 42.5, topic: "temperature"}</code>
+		</dd>
+	</dl>
+
+	<h4>🔄 Trigger Options</h4>
+	<dl class="message-properties">
+		<dt>Send on Change Only (diff)<span class="property-type">boolean</span></dt>
+		<dd>
+			<strong>Checked:</strong> Send messages only when values change (recommended for most cases)<br>
+			<strong>Unchecked:</strong> Send messages every cycle regardless of value changes
+		</dd>
+	</dl>
+
+	<h3>💡 Usage Examples</h3>
+	
+	<h4>Monitor Single Variable</h4>
+	<pre style="background-color: #f5f5f5; padding: 8px; border-radius: 4px; font-size: 12px;">
+Configuration:
+• Mode: Single Variable
+• Variable: motor_running
+• Diff: ✓ (checked)
+
+Output when motor starts:
+{
+  "payload": true,
+  "topic": "motor_running",
+  "_s7": {
+    "plc": "Factory PLC",
+    "ip": "192.168.1.10",
+    "status": "online",
+    "time": "2025-06-17T17:00:00.000Z"
+  }
+}</pre>
+
+	<h4>Get All Variables</h4>
+	<pre style="background-color: #f5f5f5; padding: 8px; border-radius: 4px; font-size: 12px;">
+Configuration:
+• Mode: All Variables
+• Diff: ✓ (checked)
+
+Output when any variable changes:
+{
+  "payload": {
+    "motor_running": true,
+    "temperature": 42.5,
+    "speed_setpoint": 75.0,
+    "alarm_active": false
+  },
+  "_s7": { ... }
+}</pre>
+
+	<h4>Process Variables Individually</h4>
+	<pre style="background-color: #f5f5f5; padding: 8px; border-radius: 4px; font-size: 12px;">
+Configuration:
+• Mode: All Variables, One per Message
+• Diff: ✓ (checked)
+
+Output (separate messages):
+{payload: true, topic: "motor_running", "_s7": {...}}
+{payload: 42.5, topic: "temperature", "_s7": {...}}
+{payload: 75.0, topic: "speed_setpoint", "_s7": {...}}</pre>
+
+	<h3>🎯 Best Practices</h3>
 	<ul>
-		<li>
-			<b>Single variable:</b> A single variable can be selected from the configured 
-			variables, and a message is sent every cycle, or only when it changes if 
-			<i>diff</i> is checked. <code>msg.payload</code> contains the variable's value
-			and <code>msg.topic</code> has the variable's name.
-		</li>
-		<li>
-			<b>All variables, one per message:</b> Like the <i>Single variable</i> mode, 
-			but for all variables configured. If <i>diff</i> is checked, a message is sent
-			everytime any variable changes. If <i>diff</i> is unchecked, one message is sent 
-			for every variable, in every cycle. Care must be taken about the number of 
-			messages per second in this mode.
-		</li>
-		<li>
-			<b>All variables:</b> In this mode, <code>msg.payload</code> contains an object 
-			with all configured variables and their values. If <i>diff</i> is checked, a 
-			message is sent if at least one of the variables changes its value.
-		</li>
+		<li><strong>Use "diff" mode:</strong> Reduces message traffic and processing load</li>
+		<li><strong>Single Variable mode:</strong> Best for critical monitoring or triggering specific actions</li>
+		<li><strong>All Variables mode:</strong> Ideal for dashboards or data logging</li>
+		<li><strong>One per Message mode:</strong> Good for individual processing but watch message volume</li>
+		<li><strong>Filter downstream:</strong> Use Switch nodes to filter specific conditions</li>
 	</ul>
+
+	<h3>🚦 Status Display</h3>
+	<ul>
+		<li><span style="color: green; font-size: 14px;">●</span> <strong>Online + value:</strong> Connected and last read value</li>
+		<li><span style="color: yellow; font-size: 14px;">●</span> <strong>Connecting:</strong> Attempting to connect to PLC</li>
+		<li><span style="color: red; font-size: 14px;">●</span> <strong>Offline:</strong> No connection to PLC</li>
+		<li><span style="color: orange; font-size: 14px;">●</span> <strong>Bad Values:</strong> Some variables have invalid addresses</li>
+	</ul>
+
+	<h3>⚡ Performance Considerations</h3>
+	<ul>
+		<li><strong>Message volume:</strong> "One per message" mode can generate many messages - monitor flow performance</li>
+		<li><strong>Cycle time:</strong> Faster cycles = more responsive but higher CPU/network load</li>
+		<li><strong>Variable count:</strong> More variables = longer read cycles</li>
+		<li><strong>Network latency:</strong> Adjust timeout if experiencing intermittent failures</li>
+	</ul>
+
+	<h3>🔧 Troubleshooting</h3>
+	<dl class="message-properties">
+		<dt>No messages received</dt>
+		<dd>• Check PLC connection status<br>• Verify variables are defined in endpoint<br>• Ensure diff mode isn't preventing initial messages</dd>
+		
+		<dt>Outdated values</dt>
+		<dd>• Check cycle time setting<br>• Verify PLC is updating the variables<br>• Check for communication errors</dd>
+		
+		<dt>Too many messages</dt>
+		<dd>• Enable diff mode to reduce message frequency<br>• Consider using "All Variables" instead of "One per Message"<br>• Increase cycle time if appropriate</dd>
+	</dl>
+
+	<h3>🔗 Related Nodes</h3>
+	<ul>
+		<li><strong>S7 Endpoint:</strong> Configure PLC connection and variables</li>
+		<li><strong>S7 Out:</strong> Write data to PLC</li>
+		<li><strong>S7 Control:</strong> Control reading behavior dynamically</li>
+		<li><strong>Switch:</strong> Filter messages based on topic or payload values</li>
+		<li><strong>Change:</strong> Transform or extract specific values from messages</li>
+	</ul>
+
+	<h3>📖 References</h3>
+	<p>📚 <strong>Complete Guide:</strong> <a href="https://github.com/oriolrius/node-red-contrib-s7/blob/main/EXAMPLE-USAGE.md" target="_blank">GitHub Documentation</a></p>
+	<p>📋 <strong>Example Flow:</strong> <a href="https://github.com/oriolrius/node-red-contrib-s7/blob/main/example-flow.json" target="_blank">Sample Implementation</a></p>
 </script>
 
 <script type="text/javascript">
@@ -1251,42 +1128,179 @@
 </script>
 
 <script type="text/x-red" data-help-name="s7 out">
-	<p>Writes to a memory area in a S7 PLC</p>
+	<p>📤 <strong>Writes data to a Siemens S7 PLC</strong> memory area with automatic type conversion and error handling.</p>
 
-	<p class="form-tips">
-		<b>Caution when writing data to production PLCs!</b><br/>
-		Fully test everything you do. The authors cannot be liable for any
-		damage or injury caused by the use of this node
-	</p>
+	<div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 8px; margin: 8px 0;">
+		<strong>⚠️ Production Safety Warning</strong><br/>
+		Always test thoroughly on non-production systems first! Writing incorrect values to PLCs can cause equipment damage, safety hazards, or production interruptions. The authors are not liable for any damage or injury caused by the use of this node.
+	</div>
 
-	<h3>Inputs</h3>
+	<h3>📥 Inputs</h3>
 	<dl class="message-properties">
-		<dt>payload<span class="property-type">string | number | boolean | array</span></dt>
+		<dt>payload<span class="property-type">any</span></dt>
 		<dd>
-			the data to be written. It will be casted to the required data type
-			whenever possible.
+			<strong>Required:</strong> The data to write to the PLC. Automatically converted to match the target variable's data type.
+			<ul>
+				<li><strong>Boolean:</strong> <code>true</code>/<code>false</code>, <code>1</code>/<code>0</code>, <code>"true"</code>/<code>"false"</code></li>
+				<li><strong>Numbers:</strong> Integers, floats, or numeric strings</li>
+				<li><strong>Arrays:</strong> For writing multiple variables (must match <code>msg.variable</code> array length)</li>
+			</ul>
 		</dd>
 		
 		<dt>variable<span class="property-type">string | array</span></dt>
 		<dd>
-			the variable to write to on the PLC, according to the variable list
-			on the PLC endpoint. This takes effect <i>only</i> if the "Variable"
-			field is left empty on the configuration.
+			<strong>Optional:</strong> Override the configured variable name(s). Use this for dynamic variable selection.
+			<ul>
+				<li><strong>Single:</strong> <code>"motor_running"</code></li>
+				<li><strong>Multiple:</strong> <code>["motor_running", "speed_setpoint"]</code></li>
+			</ul>
 		</dd>
 	</dl>
 
-	<h3>Details</h3>
-	<p>
-		Writes data to the PLC on the variable specified on the node configuration
-		or on <code>msg.variable</code>.
-	</p>
-	<p>
-		It is possible to write to multiple variables at once, by setting both 
-		<code>msg.variable</code> and <code>msg.payload</code> to arrays containing 
-		the variable names and their values, respectively. Note that they may not be
-		written in the same write cycle to the PLC, depending on the amount of variables 
-		to be written.
-	</p>
+	<h3>📤 Outputs</h3>
+	<dl class="message-properties">
+		<dt>payload<span class="property-type">object</span></dt>
+		<dd>
+			Write operation result containing:
+			<ul>
+				<li><code>variable</code> - Variable name(s) written</li>
+				<li><code>payload</code> - Value(s) written</li>
+				<li><code>values</code> - Key-value pairs of written data</li>
+				<li><code>newValues</code> - PLC values after write (if verification enabled)</li>
+				<li><code>wrongValues</code> - Values that don't match written data</li>
+				<li><code>bingo</code> - Boolean indicating successful verification</li>
+				<li><code>error</code> - Error message if write failed</li>
+				<li><code>rewriteCount</code> - Number of retry attempts performed</li>
+			</ul>
+		</dd>
+		
+		<dt>_s7<span class="property-type">object</span></dt>
+		<dd>PLC connection metadata (same as S7 In node)</dd>
+	</dl>
+
+	<h3>⚙️ Configuration Options</h3>
+	
+	<h4>Variable Selection</h4>
+	<dl class="message-properties">
+		<dt>Fixed Variable<span class="property-type">static</span></dt>
+		<dd>Select a specific variable from the endpoint's variable table. Simple and reliable for dedicated write operations.</dd>
+		
+		<dt>Dynamic Variable<span class="property-type">flexible</span></dt>
+		<dd>Leave variable field empty and specify <code>msg.variable</code> in the message. Useful for conditional or user-driven writes.</dd>
+	</dl>
+
+	<h3>💡 Usage Examples</h3>
+	
+	<h4>Simple Boolean Write</h4>
+	<pre style="background-color: #f5f5f5; padding: 8px; border-radius: 4px; font-size: 12px;">
+Configuration:
+• Variable: motor_running
+
+Input Message:
+{
+  "payload": true
+}
+
+Output Message:
+{
+  "payload": {
+    "variable": "motor_running",
+    "payload": true,
+    "values": {"motor_running": true},
+    "bingo": true,
+    "error": null,
+    "rewriteCount": 0
+  }
+}</pre>
+
+	<h4>Dynamic Variable Write</h4>
+	<pre style="background-color: #f5f5f5; padding: 8px; border-radius: 4px; font-size: 12px;">
+Configuration:
+• Variable: (empty)
+
+Input Message:
+{
+  "payload": 75.5,
+  "variable": "speed_setpoint"
+}
+
+Result: Writes 75.5 to speed_setpoint variable</pre>
+
+	<h4>Multiple Variable Write</h4>
+	<pre style="background-color: #f5f5f5; padding: 8px; border-radius: 4px; font-size: 12px;">
+Input Message:
+{
+  "variable": ["motor_running", "speed_setpoint"],
+  "payload": [true, 80.0]
+}
+
+Result: 
+• motor_running = true
+• speed_setpoint = 80.0</pre>
+
+	<h3>🔄 Write Verification & Retry</h3>
+	<p>The node includes automatic write verification and retry functionality:</p>
+	<ul>
+		<li><strong>Verification:</strong> Reads back written values to confirm successful write</li>
+		<li><strong>Retry Logic:</strong> Automatically retries failed writes (configurable in endpoint)</li>
+		<li><strong>Timing Control:</strong> Configurable delay between write and verification</li>
+		<li><strong>Result Feedback:</strong> Detailed status in output message</li>
+	</ul>
+
+	<h3>🎯 Best Practices</h3>
+	<ul>
+		<li><strong>Type Matching:</strong> Use appropriate data types (don't write 3.14 to a boolean)</li>
+		<li><strong>Value Ranges:</strong> Ensure values are within valid ranges for the target data type</li>
+		<li><strong>Test Mode:</strong> Use debug nodes to verify write operations work as expected</li>
+		<li><strong>Error Handling:</strong> Always check the output for error conditions</li>
+		<li><strong>Rate Limiting:</strong> Avoid excessive write frequency to prevent PLC overload</li>
+		<li><strong>Safety Interlocks:</strong> Implement safety checks before critical writes</li>
+	</ul>
+
+	<h3>🚦 Status Indicators</h3>
+	<ul>
+		<li><span style="color: green; font-size: 14px;">●</span> <strong>Success + value:</strong> Write completed successfully, shows written value</li>
+		<li><span style="color: yellow; font-size: 14px;">●</span> <strong>Writing:</strong> Write operation in progress</li>
+		<li><span style="color: red; font-size: 14px;">●</span> <strong>Error:</strong> Write failed (check debug output for details)</li>
+		<li><span style="color: orange; font-size: 14px;">●</span> <strong>Bad Values:</strong> Variable not found or invalid data type</li>
+	</ul>
+
+	<h3>🔧 Troubleshooting</h3>
+	<dl class="message-properties">
+		<dt>Write failed / timeout</dt>
+		<dd>• Check PLC connection status<br>• Verify variable exists in endpoint table<br>• Ensure PLC allows PUT/GET access<br>• Check write permissions for data block</dd>
+		
+		<dt>Type conversion errors</dt>
+		<dd>• Verify payload type matches target variable<br>• Check value ranges (e.g., -32768 to 32767 for INT)<br>• Use appropriate data format for strings</dd>
+		
+		<dt>Variable not found</dt>
+		<dd>• Verify variable name spelling<br>• Check variable is defined in endpoint<br>• Ensure variable address is correct</dd>
+		
+		<dt>Verification failures</dt>
+		<dd>• Check if PLC is modifying the value after write<br>• Verify timing settings in endpoint configuration<br>• Consider read-only or computed variables</dd>
+	</dl>
+
+	<h3>⚙️ Data Type Conversion</h3>
+	<table style="border-collapse: collapse; width: 100%; font-size: 12px;">
+		<tr style="background-color: #f0f0f0;"><th style="border: 1px solid #ddd; padding: 4px;">PLC Type</th><th style="border: 1px solid #ddd; padding: 4px;">Valid Input Examples</th><th style="border: 1px solid #ddd; padding: 4px;">Notes</th></tr>
+		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>BOOL</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>true, false, 1, 0, "true", "false"</code></td><td style="border: 1px solid #ddd; padding: 4px;">Any truthy/falsy value</td></tr>
+		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>INT</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>42, "42", -1000</code></td><td style="border: 1px solid #ddd; padding: 4px;">-32768 to 32767</td></tr>
+		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>DINT</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>123456, "-2000000"</code></td><td style="border: 1px solid #ddd; padding: 4px;">32-bit signed integer</td></tr>
+		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>REAL</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>3.14, "75.5", 100</code></td><td style="border: 1px solid #ddd; padding: 4px;">32-bit float</td></tr>
+	</table>
+
+	<h3>🔗 Related Nodes</h3>
+	<ul>
+		<li><strong>S7 Endpoint:</strong> Configure PLC connection and define variables</li>
+		<li><strong>S7 In:</strong> Read data from PLC for monitoring or feedback</li>
+		<li><strong>Function:</strong> Prepare data or calculate values before writing</li>
+		<li><strong>Switch:</strong> Conditionally trigger writes based on conditions</li>
+		<li><strong>Delay:</strong> Rate-limit write operations</li>
+	</ul>
+
+	<h3>📖 References</h3>
+	<p>📚 <strong>Complete Guide:</strong> <a href="https://github.com/oriolrius/node-red-contrib-s7/blob/main/EXAMPLE-USAGE.md" target="_blank">GitHub Documentation</a></p>
+	<p>📋 <strong>Example Flow:</strong> <a href="https://github.com/oriolrius/node-red-contrib-s7/blob/main/example-flow.json" target="_blank">Sample Implementation</a></p>
 </script>
 
 <script type="text/javascript">
@@ -1400,31 +1414,211 @@
 </script>
 
 <script type="text/x-red" data-help-name="s7 control">
-	<p>Enables advanced control of the PLC and the connection</p>
-	
-	<h3>Details</h3>
-	<p>The behavior of this node is changed according to the selected function. Each function
-		has its own configuration, expects different parameters in the messages, and sends
-		different messages out
-	</p>
-	<dl class="message-properties">
-		<dt>Cycle Time</dt>
-		<dd>
-			Changes the time interval between each cyclic read 
-			of variables. It expects a message with <code>payload</code> with a 
-			positive number, being the time in milliseconds between each read. A 
-			value of zero disables the cyclic read.
-		</dd>
+	<p>🎛️ <strong>Advanced control of PLC connection and communication</strong> - dynamically adjust reading behavior, manage variables, and access PLC diagnostic functions.</p>
 
-		<dt>Trigger read</dt>
+	<h3>🔧 Available Functions</h3>
+	
+	<h4>📊 Cycle Time Control</h4>
+	<dl class="message-properties">
+		<dt>Function<span class="property-type">cycletime</span></dt>
 		<dd>
-			Manually triggers a read cycle. No message parameters are used and the 
-			same message is sent on the output. Useful when longer cycle times are 
-			used, but an instant feedback is needed (for example after changing a 
-			variable). Note that the <i>s7 in</i> nodes are still required to read
-			the values of the variables.
+			<strong>Purpose:</strong> Dynamically change the automatic reading interval<br>
+			<strong>Input:</strong> <code>msg.payload</code> = time in milliseconds<br>
+			<strong>Range:</strong> 0 (disable) to any positive number (minimum 50ms enforced)<br>
+			<strong>Use case:</strong> Adapt reading speed based on system load or operational mode
 		</dd>
 	</dl>
+
+	<h4>⚡ Manual Read Trigger</h4>
+	<dl class="message-properties">
+		<dt>Function<span class="property-type">trigger</span></dt>
+		<dd>
+			<strong>Purpose:</strong> Force an immediate read of all variables<br>
+			<strong>Input:</strong> Any message (payload ignored)<br>
+			<strong>Use case:</strong> Get instant feedback after writing values or on-demand reading
+		</dd>
+	</dl>
+
+	<h4>📋 Dynamic Variable Management</h4>
+	<dl class="message-properties">
+		<dt>Function<span class="property-type">setvartable</span></dt>
+		<dd>
+			<strong>Purpose:</strong> Replace the entire variable table at runtime<br>
+			<strong>Input:</strong> <code>msg.vartable</code> = array of variable objects<br>
+			<strong>Format:</strong> <code>[{name: "var1", addr: "DB1,X0.0"}, {name: "var2", addr: "DB1,INT2"}]</code><br>
+			<strong>Use case:</strong> Recipe-based variable sets, conditional monitoring
+		</dd>
+	</dl>
+
+	<h4>🔍 PLC Diagnostic Functions</h4>
+	<dl class="message-properties">
+		<dt>Function<span class="property-type">ssl</span></dt>
+		<dd>
+			<strong>Purpose:</strong> Read System Status List (SSL) from PLC<br>
+			<strong>Input:</strong> <code>msg.payload</code> = <code>{id: number, index: number}</code><br>
+			<strong>Use case:</strong> Get PLC system information, diagnostics, module status
+		</dd>
+		
+		<dt>Function<span class="property-type">list-blocks</span></dt>
+		<dd>
+			<strong>Purpose:</strong> List all available program blocks in PLC<br>
+			<strong>Input:</strong> Any message<br>
+			<strong>Output:</strong> Array of available blocks (OB, FC, FB, DB, etc.)
+		</dd>
+		
+		<dt>Function<span class="property-type">upload-block</span></dt>
+		<dd>
+			<strong>Purpose:</strong> Upload a specific program block from PLC<br>
+			<strong>Input:</strong> <code>msg.payload</code> = <code>{type: "DB", number: 1}</code><br>
+			<strong>Use case:</strong> Backup blocks, analyze PLC program structure
+		</dd>
+		
+		<dt>Function<span class="property-type">upload-all-blocks</span></dt>
+		<dd>
+			<strong>Purpose:</strong> Upload all program blocks from PLC<br>
+			<strong>Input:</strong> Any message<br>
+			<strong>Warning:</strong> Can generate large amounts of data
+		</dd>
+		
+		<dt>Function<span class="property-type">all-block-info</span></dt>
+		<dd>
+			<strong>Purpose:</strong> Get information about all blocks without uploading content<br>
+			<strong>Input:</strong> Any message<br>
+			<strong>Output:</strong> Block metadata (type, number, size, timestamps)
+		</dd>
+	</dl>
+
+	<h3>💡 Usage Examples</h3>
+	
+	<h4>Adaptive Cycle Time</h4>
+	<pre style="background-color: #f5f5f5; padding: 8px; border-radius: 4px; font-size: 12px;">
+Configuration:
+• Function: Cycle Time
+
+Speed up during production:
+{"payload": 200}  // Read every 200ms
+
+Slow down during idle:
+{"payload": 5000} // Read every 5 seconds
+
+Stop automatic reading:
+{"payload": 0}    // Disable cyclic reading</pre>
+
+	<h4>Recipe-Based Variable Management</h4>
+	<pre style="background-color: #f5f5f5; padding: 8px; border-radius: 4px; font-size: 12px;">
+Configuration:
+• Function: Set Variable Table
+
+Recipe A variables:
+{
+  "vartable": [
+    {"name": "temp_setpoint", "addr": "DB10,REAL0"},
+    {"name": "pressure_limit", "addr": "DB10,REAL4"},
+    {"name": "mixer_speed", "addr": "DB10,INT8"}
+  ]
+}
+
+Recipe B variables:
+{
+  "vartable": [
+    {"name": "conveyor_speed", "addr": "DB20,REAL0"},
+    {"name": "package_count", "addr": "DB20,INT4"},
+    {"name": "quality_check", "addr": "DB20,X8.0"}
+  ]
+}</pre>
+
+	<h4>Manual Read After Write</h4>
+	<pre style="background-color: #f5f5f5; padding: 8px; border-radius: 4px; font-size: 12px;">
+Configuration:
+• Function: Trigger
+
+Flow sequence:
+[Inject] → [S7 Out] → [S7 Control] → [S7 In]
+           Write      Trigger Read   Get Updated
+           Value      Immediately    Values</pre>
+
+	<h4>PLC Diagnostics</h4>
+	<pre style="background-color: #f5f5f5; padding: 8px; border-radius: 4px; font-size: 12px;">
+Get CPU information:
+{"payload": {"id": 17, "index": 0}}
+
+List all data blocks:
+[Any message] → Function: list-blocks
+
+Upload specific block:
+{"payload": {"type": "DB", "number": 1}}</pre>
+
+	<h3>🎯 Best Practices</h3>
+	<ul>
+		<li><strong>Cycle time optimization:</strong> Balance responsiveness vs. system load</li>
+		<li><strong>Variable table changes:</strong> Plan transitions carefully to avoid data loss</li>
+		<li><strong>Manual triggers:</strong> Use sparingly to avoid overwhelming the PLC</li>
+		<li><strong>Block operations:</strong> Test with non-critical PLCs first</li>
+		<li><strong>Error handling:</strong> Always check output messages for errors</li>
+	</ul>
+
+	<h3>⚡ Performance Impact</h3>
+	<ul>
+		<li><strong>Cycle time changes:</strong> Take effect immediately for all S7 In nodes</li>
+		<li><strong>Variable table updates:</strong> Brief interruption in data flow during transition</li>
+		<li><strong>Block operations:</strong> Can be CPU-intensive on older PLCs</li>
+		<li><strong>SSL requests:</strong> May affect PLC performance if used frequently</li>
+	</ul>
+
+	<h3>🚦 Status Indicators</h3>
+	<ul>
+		<li><span style="color: green; font-size: 14px;">●</span> <strong>Success:</strong> Function completed successfully</li>
+		<li><span style="color: yellow; font-size: 14px;">●</span> <strong>Processing:</strong> Function in progress</li>
+		<li><span style="color: red; font-size: 14px;">●</span> <strong>Error:</strong> Function failed (check debug output)</li>
+		<li><span style="color: blue; font-size: 14px;">●</span> <strong>Ready:</strong> Waiting for input message</li>
+	</ul>
+
+	<h3>🔧 Troubleshooting</h3>
+	<dl class="message-properties">
+		<dt>Function not working</dt>
+		<dd>• Check PLC connection status<br>• Verify function is supported by PLC model<br>• Ensure correct message format</dd>
+		
+		<dt>Variable table update failed</dt>
+		<dd>• Verify variable address formats<br>• Check for duplicate variable names<br>• Ensure addresses exist in PLC</dd>
+		
+		<dt>Block operations fail</dt>
+		<dd>• Check PLC security settings<br>• Verify block exists and is accessible<br>• Some functions require specific PLC firmware</dd>
+		
+		<dt>SSL requests timeout</dt>
+		<dd>• Increase endpoint timeout setting<br>• Check SSL ID/Index validity<br>• Some SSL functions are PLC-specific</dd>
+	</dl>
+
+	<h3>⚠️ Important Notes</h3>
+	<ul>
+		<li><strong>Dynamic changes:</strong> Cycle time and variable table changes affect all connected S7 nodes immediately</li>
+		<li><strong>PLC compatibility:</strong> Advanced functions (SSL, block operations) may not work with all PLC models</li>
+		<li><strong>Security:</strong> Block upload operations may be restricted by PLC security settings</li>
+		<li><strong>Performance:</strong> Monitor PLC CPU usage when using diagnostic functions frequently</li>
+	</ul>
+
+	<h3>🔗 Function-Specific Inputs</h3>
+	<table style="border-collapse: collapse; width: 100%; font-size: 12px;">
+		<tr style="background-color: #f0f0f0;"><th style="border: 1px solid #ddd; padding: 4px;">Function</th><th style="border: 1px solid #ddd; padding: 4px;">Required Input</th><th style="border: 1px solid #ddd; padding: 4px;">Example</th></tr>
+		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>cycletime</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>msg.payload</code> (number)</td><td style="border: 1px solid #ddd; padding: 4px;"><code>{payload: 1000}</code></td></tr>
+		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>trigger</strong></td><td style="border: 1px solid #ddd; padding: 4px;">Any message</td><td style="border: 1px solid #ddd; padding: 4px;"><code>{}</code></td></tr>
+		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>setvartable</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>msg.vartable</code> (array)</td><td style="border: 1px solid #ddd; padding: 4px;"><code>{vartable: [{name:"x", addr:"DB1,X0.0"}]}</code></td></tr>
+		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>ssl</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>msg.payload.id, msg.payload.index</code></td><td style="border: 1px solid #ddd; padding: 4px;"><code>{payload: {id: 17, index: 0}}</code></td></tr>
+		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>upload-block</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>msg.payload.type, msg.payload.number</code></td><td style="border: 1px solid #ddd; padding: 4px;"><code>{payload: {type: "DB", number: 1}}</code></td></tr>
+	</table>
+
+	<h3>🔗 Related Nodes</h3>
+	<ul>
+		<li><strong>S7 Endpoint:</strong> Manages the connection and base configuration</li>
+		<li><strong>S7 In:</strong> Affected by cycle time changes and variable table updates</li>
+		<li><strong>S7 Out:</strong> Often used before trigger function for immediate feedback</li>
+		<li><strong>Function:</strong> Prepare complex input data for advanced functions</li>
+		<li><strong>Switch:</strong> Route different functions based on conditions</li>
+	</ul>
+
+	<h3>📖 References</h3>
+	<p>📚 <strong>Complete Guide:</strong> <a href="https://github.com/oriolrius/node-red-contrib-s7/blob/main/EXAMPLE-USAGE.md" target="_blank">GitHub Documentation</a></p>
+	<p>📋 <strong>Example Flow:</strong> <a href="https://github.com/oriolrius/node-red-contrib-s7/blob/main/example-flow.json" target="_blank">Sample Implementation</a></p>
+	<p>🔍 <strong>SSL Reference:</strong> Siemens documentation for System Status List IDs and indexes</p>
 </script>
 
 <script type="text/javascript">

@@ -1,3 +1,14 @@
+Version: 4.1.0
+------------
+ - **MAJOR**: Comprehensive inline documentation overhaul for all Node-RED help panels
+ - **DOCUMENTATION**: Complete rewrite of S7 Endpoint, S7 In, S7 Out, and S7 Control help sections
+ - **ENHANCEMENT**: Added visual examples, troubleshooting guides, and best practices in Node-RED UI
+ - **FEATURE**: Inline help now includes emoji icons, tables, code examples, and formatted sections
+ - **USABILITY**: Added status indicator explanations and performance considerations
+ - **REFERENCE**: Direct links to GitHub documentation and example flows from within Node-RED
+ - **EXAMPLES**: Usage scenarios with actual message formats and configuration samples
+ - **TROUBLESHOOTING**: Detailed error resolution steps directly in the help panels
+
 Version: 4.0.11
 ------------
  - **FIX**: Fixed "Class constructor S7Endpoint cannot be invoked without 'new'" error
