@@ -1,3 +1,29 @@
+Version: 4.0.7
+------------
+ - **MAINTENANCE**: Package maintenance and dependency updates
+ - **STABILITY**: Minor bug fixes and improvements
+ - **ENHANCEMENT**: Code quality improvements and optimizations
+
+Version: 4.0.6
+------------
+ - **MAINTENANCE**: Package maintenance and dependency updates
+ - **STABILITY**: Minor bug fixes and improvements
+
+Version: 4.0.5
+------------
+ - **MAINTENANCE**: Package maintenance and dependency updates
+ - **STABILITY**: Minor bug fixes and improvements
+
+Version: 4.0.4
+------------
+ - **MAINTENANCE**: Package maintenance and dependency updates
+ - **STABILITY**: Minor bug fixes and improvements
+
+Version: 4.0.3
+------------
+ - **MAINTENANCE**: Package maintenance and dependency updates
+ - **STABILITY**: Minor bug fixes and improvements
+
 Version: 4.0.2
 ------------
  - **MAINTENANCE**: Package maintenance and dependency updates

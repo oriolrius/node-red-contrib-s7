@@ -1,6 +1,6 @@
 {
     "name": "@oriolrius/node-red-contrib-s7",
-    "version": "4.0.6",
+    "version": "4.0.7",
     "description": "A Node-RED node to interact with Siemens S7 PLCs",
     "dependencies": {
         "nodes7": "^0.3.13"
@@ -32,6 +32,7 @@
         "node-red"
     ],
     "node-red": {
+        "version": ">=3.0.0",
         "nodes": {
             "s7": "red/s7.js"
         }
