@@ -35,7 +35,7 @@ var tools = require('../src/tools.js');
 module.exports = function (RED) {
     "use strict";
 
-    var nodes7 = require('nodes7');
+    var { S7Endpoint, S7ItemGroup } = require('@st-one-io/nodes7');
     var EventEmitter = require('events').EventEmitter;
 
     // ---------- Discovery Endpoints ----------
@@ -223,7 +223,7 @@ module.exports = function (RED) {
 
         // ORC
         node.setVars = function(newVarTable) {
-            itemGroup = new nodes7.S7ItemGroup(node.endpoint);
+            itemGroup = new S7ItemGroup(node.endpoint);
             node._vars = createTranslationTable(newVarTable);
             itemGroup.setTranslationCB(k => node._vars[k]);
             let varKeys = Object.keys(node._vars)
@@ -349,7 +349,7 @@ module.exports = function (RED) {
 
         manageStatus('offline');
 
-        node.endpoint = new nodes7.S7Endpoint(connOpts);
+        node.endpoint = new S7Endpoint(connOpts);
         node.endpoint.on('connecting', () => manageStatus('connecting'));
         node.endpoint.on('connect', onConnect);
         node.endpoint.on('disconnect', onDisconnect);
@@ -358,7 +358,7 @@ module.exports = function (RED) {
             node.error(e && e.toString(), {});
         }));
 
-        itemGroup = new nodes7.S7ItemGroup(node.endpoint);
+        itemGroup = new S7ItemGroup(node.endpoint);
         itemGroup.setTranslationCB(k => node._vars[k]);
 
         let varKeys = Object.keys(node._vars)

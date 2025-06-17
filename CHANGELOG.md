@@ -1,3 +1,9 @@
+Version: 4.0.8
+------------
+ - **FIX**: Fixed "TypeError: nodes7.S7Endpoint is not a constructor" by updating to @st-one-io/nodes7
+ - **BREAKING**: Updated from nodes7 ^0.3.13 to @st-one-io/nodes7 ^1.1.0 for better compatibility
+ - **ENHANCEMENT**: Improved constructor handling for S7Endpoint and S7ItemGroup
+
 Version: 4.0.7
 ------------
  - **MAINTENANCE**: Package maintenance and dependency updates
