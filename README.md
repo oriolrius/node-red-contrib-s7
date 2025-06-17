@@ -1,237 +1,235 @@
 # node-red-contrib-s7
-A Node-RED node to interact with Siemens S7 PLCs.
 
-This node was created as part of the [ST-One](https://st-one.io) project.
+A Node-RED node to interact with Siemens S7 PLCs, providing comprehensive read/write capabilities and dynamic variable management.
+
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Update Log](#update-log)
+- [Node Types](#node-types)
+  - [S7 Endpoint (Configuration Node)](#s7-endpoint-configuration-node)
+  - [S7 In Node](#s7-in-node)
+  - [S7 Out Node](#s7-out-node)
+  - [S7 Control Node](#s7-control-node)
+- [Dynamic Variable Table Management](#dynamic-variable-table-management)
+- [Usage Guide](#usage-guide)
+- [Variable Addressing](#variable-addressing)
+- [Notes on S7-1200/1500](#notes-on-s7-12001500)
+- [Notes on Logo! 8](#notes-on-logo-8)
+- [Troubleshooting](#troubleshooting)
+- [Example Flows](#example-flows)
+- [Acknowledgments](#acknowledgments)
+- [Support and Contributing](#support-and-contributing)
+- [License](#license)
+
+## Features
+
+- **Multiple PLC Support**: Connect to S7-300, S7-400, S7-1200, S7-1500, and Logo! 8 PLCs
+- **Dynamic Variable Management**: Runtime reconfiguration of monitored variables without flow restart
+- **Flexible Data Types**: Support for all standard S7 data types including REAL, INT, DINT, BOOL, STRING, and timestamps
+- **Multiple Connection Modes**: ISO-on-TCP with Rack/Slot or TSAP addressing
+- **Advanced Control Functions**: SSL certificate access, block upload/download, and diagnostic functions
+- **Internationalization**: Support for English, German, and Simplified Chinese
+- **Automatic Retry Logic**: Configurable failure rewrite with interval-based retry mechanisms
+
+## Installation
+
+Install directly from the Node-RED palette manager or run the following command in your Node-RED user directory:
+
+```bash
+npm install node-red-contrib-s7
+```
+
+**Requirements:**
+- Node.js version 10 or greater
+- Node-RED version 1.0 or greater
+
+## Quick Start
+
+1. **Add an S7 Endpoint**: Configure your PLC connection details (IP, rack/slot, variables)
+2. **Add S7 In nodes**: Monitor PLC variables with configurable update modes
+3. **Add S7 Out nodes**: Write data to PLC variables with automatic verification
+4. **Add S7 Control nodes**: Perform advanced operations like dynamic variable management
 
 ## Update Log
 
+### v3.5.0
+
+- **NEW**: [`s7 control`](red/s7.js:677) node adds [`setvartable`](red/s7.js:695) function for dynamic variable table management
+- **FEATURE**: Runtime reconfiguration of PLC variable monitoring without flow restart
+- **ENHANCEMENT**: All [`s7 in`](red/s7.js:381) nodes automatically adapt to new variable tables
+- **EXAMPLE**: Added comprehensive [example flow](test/setvartable_example_flow.json:1) demonstrating recipe-based, conditional, and time-based variable switching
+- **CAPABILITY**: Complete variable table replacement during operation
+
 ### v3.4.0
 
-- `s7-out` node adds `rewrite count` output
-
-- `s7-out` node fixes `data residue causing rewrite failure` issue
+- **NEW**: [`s7 out`](red/s7.js:510) node adds `rewrite count` output
+- **FIX**: [`s7 out`](red/s7.js:510) node resolves data residue causing rewrite failure
 
 ### v3.3.1
 
-- `s7-out` node refactors `failure rewrite` logic
-
-```bash
-Before: Write data -> Read latest values -> Check if successful -> Wait interval time -> Retry write data
-After: Write data -> Wait interval time -> Read latest values -> Check if successful -> Retry write data
-```
-
-- `s7-out` node refactors `async-await` syntax
+- **REFACTOR**: [`s7 out`](red/s7.js:510) node improves failure rewrite logic timing
+- **IMPROVEMENT**: Enhanced async-await syntax implementation
 
 ### v3.3.0
 
-- `s7-endpoint` node adds `failure rewrite` configuration
-
-  ```bash
-  Note!
-  Agreement with PLC developers: If data needs to be reset, it must be kept for at least 3 seconds before reset to avoid immediate reset after writing data which causes the program to think data writing failed
-  ```
-
-  ```bash
-  Failure rewrite count: When this parameter is greater than 0, if data writing fails, it will automatically retry writing data until reaching this count limit
-
-  Failure rewrite interval: Time interval for retrying data writing
-  ```
-
-- `s7-in` node refactors `msg` output
-
-  ```json
-  {
-    // s7 node parameters
-    "_s7": {
-      "plc": "7#-8#",                       // plc name
-      "ip": "172.19.21.70",                 // plc ip
-      "status": "online",                   // plc status [online/offline]
-      "time": "2024-07-26T02:15:38.128Z"    // msg message time
-    },
-
-    // msg message content
-    "payload": { "a":1, "b":2 }
-  }
-  ```
-
-- `s7-out` node refactors `msg` output
-
-  ```json
-  {
-    // s7 node parameters
-    "_s7": {
-      "plc": "7#-8#",                       // plc name
-      "ip": "172.19.21.70",                 // plc ip
-      "status": "online",                   // plc status [online/offline]
-      "time": "2024-07-26T02:15:38.128Z"    // msg message time
-    },
-
-    // msg message content
-    "payload": {
-      "variable": ["a", "b"],               // written key msg.variable
-      "payload": [1, 2],                    // written value msg.payload
-      "values": { "a":1, "b":2 },           // written key-value pairs
-      "newValues": {},                      // latest PLC key-value pairs
-      "wrongValues": {},                    // key-value pairs inconsistent with written values
-      "bingo": false,                       // whether write was successful [whether PLC latest values match written values]
-      "error": "Error: Not connected"       // error
-    }
-  }
-  ```
-
-- All `s7` nodes add `Simplified Chinese` translation
+- **NEW**: [`s7 endpoint`](red/s7.js:144) node adds configurable failure rewrite functionality
+- **FEATURE**: Automatic retry mechanism with customizable count and interval
+- **ENHANCEMENT**: Improved message output structure for both [`s7 in`](red/s7.js:381) and [`s7 out`](red/s7.js:510) nodes
+- **LOCALIZATION**: Added Simplified Chinese translation support
 
 ### v3.2.0
 
-- `s7-in` node adds `device status` output
+- **NEW**: [`s7 in`](red/s7.js:381) node adds device status monitoring
+- **NEW**: [`s7 out`](red/s7.js:510) node adds detailed write result reporting
 
-  ```json
-  {
-        "name": "7#-8#",       // plc name
-        "ip": "172.19.21.70",  // plc ip
-        "status": "online"     // plc status online / offline
-  }
-  ```
+## Node Types
 
-- `s7-out` node adds `write result` output
+This package provides four main node types for comprehensive S7 PLC integration:
 
-  ```json
-  {
-        "error": "Error: Not connected", // error
-        "variable": ["a", "b"],          // written key msg.variable
-        "payload": [1, 2],               // written value msg.payload
-        "values": { "a":1, "b":2 },      // written key-value pairs
-        "newValues": {},                 // latest PLC key-value pairs
-        "bingo": false,                  // whether PLC latest values match written values
-        "wrongValues": {}                // key-value pairs inconsistent with written values
-  }
-  ```
+### S7 Endpoint (Configuration Node)
 
-## Install
+The **S7 Endpoint** is a configuration node that defines the connection to your PLC. Each endpoint represents one PLC connection and can be shared among multiple S7 nodes.
 
-You can install this node directly from the "Manage Palette" menu in the Node-RED interface.
+**Configuration Options:**
+- **Transport**: ISO-on-TCP or MPI-S7 (requires separate adapter)
+- **Connection Mode**: Rack/Slot or TSAP addressing
+- **Address**: PLC IP address and port
+- **Variable Table**: Define all variables to monitor/write
+- **Cycle Time**: Automatic reading interval (minimum 50ms)
+- **Timeout**: Connection timeout in milliseconds
+- **Retry Settings**: Failure rewrite count and interval
 
-Alternatively, run the following command in your Node-RED user directory - typically `~/.node-red` on Linux or `%HOMEPATH%\.nodered` on Windows
+### S7 In Node
 
-        npm install node-red-contrib-s7
+The **S7 In** node reads data from the PLC and outputs messages when values change or on each cycle.
 
-NodeJS version 10 or greater and Node-RED version 1.0 or greater is required.
+**Operating Modes:**
+- **Single Variable**: Monitor one specific variable
+- **All Variables**: Output all variables as a single object
+- **All Variables, One Per Message**: Output each variable as a separate message
 
+**Configuration:**
+- **Endpoint**: Select the S7 Endpoint configuration
+- **Mode**: Choose the operating mode
+- **Variable**: Select specific variable (single mode only)
+- **Diff**: Only output when values change (recommended)
 
-## S7 Control Node
-
-The **S7 Control** node provides advanced control and diagnostic functions for Siemens S7 PLCs. It requires an S7 Endpoint configuration node and accepts input messages specifying the operation to perform.
-
-### Supported Functions
-
-#### cycletime
-
-Updates the PLC polling interval
-
-- **Input**: `msg.payload` containing new cycle time in milliseconds
-- **Output**: Original message on success
-- **Notes**:
-  - Minimum cycle time is 50ms (values below will be auto-adjusted)
-  - Set to 0 to disable cyclic reading
-
-Example:
-
+**Output Message Structure:**
 ```json
 {
-  "function": "cycletime",
-  "payload": 200
+  "topic": "variable_name",
+  "payload": "variable_value",
+  "_s7": {
+    "plc": "PLC_Name",
+    "ip": "192.168.1.100",
+    "status": "online",
+    "time": "2024-07-26T02:15:38.128Z"
+  }
 }
 ```
 
-#### trigger
+### S7 Out Node
 
+The **S7 Out** node writes data to PLC variables with automatic verification and retry capabilities.
+
+**Features:**
+- **Single/Multiple Variable Writing**: Write to one or multiple variables simultaneously
+- **Automatic Verification**: Reads back written values to confirm success
+- **Retry Logic**: Configurable retry attempts with intervals
+- **Detailed Feedback**: Comprehensive write result reporting
+
+**Input Message:**
+```json
+{
+  "payload": "value_to_write",
+  "variable": "variable_name"  // Optional if configured in node
+}
+```
+
+**Output Message Structure:**
+```json
+{
+  "payload": {
+    "variable": ["var1", "var2"],
+    "payload": [value1, value2],
+    "values": {"var1": value1, "var2": value2},
+    "newValues": {"var1": actual_value1, "var2": actual_value2},
+    "wrongValues": {},
+    "bingo": true,
+    "error": null,
+    "rewriteCount": 0
+  },
+  "_s7": {
+    "plc": "PLC_Name",
+    "ip": "192.168.1.100",
+    "status": "online",
+    "time": "2024-07-26T02:15:38.128Z"
+  }
+}
+```
+
+### S7 Control Node
+
+The **S7 Control** node provides advanced control and diagnostic functions for S7 PLCs.
+
+**Supported Functions:**
+
+#### `cycletime`
+Updates the PLC polling interval
+```json
+{"function": "cycletime", "payload": 200}
+```
+
+#### `trigger`
 Manually triggers an immediate PLC read cycle
+```json
+{"function": "trigger"}
+```
 
-- **Input**: Any message
-- **Output**: Original message
-- **Use Case**: On-demand reading outside normal cycle
-
-#### setvartable
-
-Dynamically updates the variable table for the S7 endpoint during runtime
-
-- **Input**: `msg.vartable` containing an array of variable objects with `name` and `addr` properties
-- **Output**: `msg.payload` with confirmation object containing the new variable table
-- **Use Case**: Dynamic reconfiguration of PLC variables without stopping the flow
-- **Notes**:
-  - Existing S7 In nodes will automatically adapt to the new variable table
-  - Variable addresses must follow the standard S7 addressing scheme
-  - This function completely replaces the existing variable table
-
-Example:
-
+#### `setvartable`
+Dynamically updates the variable table during runtime
 ```json
 {
   "function": "setvartable",
   "vartable": [
     {"name": "temperature", "addr": "DB1,REAL0"},
-    {"name": "pressure", "addr": "DB1,REAL4"},
-    {"name": "motor_status", "addr": "DB2,X0.0"}
+    {"name": "pressure", "addr": "DB1,REAL4"}
   ]
 }
 ```
 
-#### ssl
-
+#### `ssl`
 Retrieves SSL certificate information
-
-- **Input**: `msg.payload` containing object with `id` and `index` properties
-- **Output**: `msg.payload` with certificate data
-
-Example:
-
 ```json
-{
-  "function": "ssl",
-  "payload": {"id": 0, "index": 0}
-}
+{"function": "ssl", "payload": {"id": 0, "index": 0}}
 ```
 
-#### list-blocks
-
-Lists all program blocks in PLC
-
-- **Input**: Any message
-- **Output**: `msg.payload` with block list array
-
-#### upload-block
-
-Uploads a specific program block from PLC
-
-- **Input**: `msg.payload` containing object with `type` (block type) and `number` (block number)
-- **Output**: `msg.payload` with block content
-
-Example:
-
+#### `list-blocks`
+Lists all program blocks in the PLC
 ```json
-{
-  "function": "upload-block",
-  "payload": {"type": "DB", "number": 1}
-}
+{"function": "list-blocks"}
 ```
 
-#### upload-all-blocks
+#### `upload-block`
+Uploads a specific program block
+```json
+{"function": "upload-block", "payload": {"type": "DB", "number": 1}}
+```
 
-Uploads all program blocks from PLC
+#### `upload-all-blocks`
+Uploads all program blocks from the PLC
+```json
+{"function": "upload-all-blocks"}
+```
 
-- **Input**: Any message
-- **Output**: `msg.payload` with array of all blocks
-
-#### all-block-info
-
+#### `all-block-info`
 Retrieves metadata for all PLC blocks
-
-- **Input**: Any message
-- **Output**: `msg.payload` with block information objects
-
-### Error Handling
-
-Errors are reported through Node-RED's error handling system. Successful operations pass through the original message.
+```json
+{"function": "all-block-info"}
+```
 
 ## Dynamic Variable Table Management
 
@@ -358,17 +356,87 @@ return msg;
 
 This dynamic capability makes the S7 nodes extremely flexible for applications requiring runtime reconfiguration, such as multi-product manufacturing lines, recipe-based processes, or systems with changing monitoring requirements.
 
-## Usage
+## Usage Guide
 
-Each connection to a PLC is represented by the **S7 Endpoint** configuration node. You can configure the PLC's Address, the variables available and their addresses, and the cycle time for reading the variables.
-The **S7 In** node makes the variable's values available in a flow in three different modes:
+### Basic Setup
 
-*   **Single variable:** A single variable can be selected from the configured variables, and a message is sent every cycle, or only when it changes if _diff_ is checked. `msg.payload` contains the variable's value and `msg.topic` has the variable's name.
-*   **All variables, one per message:** Like the _Single variable_ mode, but for all variables configured. If _diff_ is checked, a message is sent everytime any variable changes. If _diff_ is unchecked, one message is sent for every variable, in every cycle. Care must be taken about the number of messages per second in this mode.
-*   **All variables:** In this mode, `msg.payload` contains an object with all configured variables and their values. If _diff_ is checked, a message is sent if at least one of the variables changes its value.
+1. **Create an S7 Endpoint Configuration**
+   - Add an S7 Endpoint configuration node
+   - Configure connection details (IP address, rack/slot or TSAP)
+   - Define your variable table with names and addresses
+   - Set cycle time and timeout values
 
+2. **Add S7 Nodes to Your Flow**
+   - **S7 In**: For reading PLC data
+   - **S7 Out**: For writing data to PLC
+   - **S7 Control**: For advanced operations
 
-### Variable addressing
+### S7 In Node Modes
+
+The **S7 In** node offers three operating modes:
+
+#### Single Variable Mode
+- Monitors one specific variable from the endpoint's variable table
+- `msg.payload` contains the variable's value
+- `msg.topic` contains the variable's name
+- Use `diff` option to only send messages when the value changes
+
+#### All Variables Mode
+- `msg.payload` contains an object with all configured variables and their values
+- Single message per cycle containing all data
+- Use `diff` option to only send when any variable changes
+- Most efficient for monitoring multiple variables
+
+#### All Variables, One Per Message Mode
+- Sends separate messages for each variable
+- Like single variable mode but for all variables
+- **Caution**: Can generate many messages per second
+- Consider message rate impact on your flow performance
+
+### Writing Data with S7 Out
+
+The S7 Out node supports both single and multiple variable writing:
+
+#### Single Variable Writing
+```javascript
+msg.payload = 42;           // Value to write
+msg.variable = "temp_sp";   // Variable name (optional if configured in node)
+```
+
+#### Multiple Variable Writing
+```javascript
+msg.payload = [42, true, 100];              // Array of values
+msg.variable = ["temp_sp", "pump_on", "speed"];  // Array of variable names
+```
+
+### Advanced Control Operations
+
+Use the S7 Control node for advanced operations:
+
+#### Dynamic Variable Management
+```javascript
+// Switch to different monitoring configuration
+msg.function = "setvartable";
+msg.vartable = [
+    {"name": "new_temp", "addr": "DB2,REAL0"},
+    {"name": "new_pressure", "addr": "DB2,REAL4"}
+];
+```
+
+#### Cycle Time Control
+```javascript
+// Change polling frequency
+msg.function = "cycletime";
+msg.payload = 500;  // New cycle time in milliseconds
+```
+
+#### Manual Trigger
+```javascript
+// Force immediate read
+msg.function = "trigger";
+```
+
+## Variable addressing
 
 The variables and their addresses configured on the **S7 Endpoint** follow a slightly different scheme than used on Step 7 or TIA Portal. Here are some examples that may guide you on addressing your variables:
 
@@ -416,18 +484,17 @@ The variables and their addresses configured on the **S7 Endpoint** follow a sli
 | `MRW20`                       | `MW20`                | Number        | Unsigned 16-bit number at byte 20 of memory area, interpreted as Little-Endian |
 
 
- - *) Note that strings on the PLC uses 2 extra bytes at start for size/length of the string
- - **) Note that javascript's `Date` are _always_ represented in UTC. Please use other nodes like [node-red-contrib-moment](https://flows.nodered.org/node/node-red-contrib-moment) to properly handle type conversions
-
+- *) Note that strings on the PLC uses 2 extra bytes at start for size/length of the string
+- **) Note that javascript's `Date` are _always_ represented in UTC. Please use other nodes like [node-red-contrib-moment](https://flows.nodered.org/node/node-red-contrib-moment) to properly handle type conversions
 
 ### Notes on S7-1200/1500
 
 These newer PLCs offer an "extended" version of the S7 Protocol, while we have only a "basic" version of it.
 
 Therefore, some additional configuration steps on the PLC are necessary:
- - "Optimized block access" must be disabled for the DBs we want to access ([image](http://snap7.sourceforge.net/snap7_client_file/db_1500.bmp))
- - In the "Protection" section of the CPU Properties, enable the "Permit access with PUT/GET" checkbox ([image](http://snap7.sourceforge.net/snap7_client_file/cpu_1500.bmp))
 
+- "Optimized block access" must be disabled for the DBs we want to access ([image](http://snap7.sourceforge.net/snap7_client_file/db_1500.bmp))
+- In the "Protection" section of the CPU Properties, enable the "Permit access with PUT/GET" checkbox ([image](http://snap7.sourceforge.net/snap7_client_file/cpu_1500.bmp))
 
 ### Notes on Logo! 8
 
@@ -459,20 +526,121 @@ Some addressing examples:
 | `0`     | `DB1,BYTE0`              | R/W access  |
 | `1`     | `DB1,X1.3`               | R/W access Note: use booleans |
 | `2..3`  | `DB1,WORD2`              | R/W access  |
-| `4..7`  | `DB1,DWORD4`             | R/W access  |
- 
 
-## Bugs and enhancements
+## Troubleshooting
 
-Please share your ideas and experiences on the [Node-RED forum](https://discourse.nodered.org/), or open an issue on the [page of the project on GitHub](https://github.com/st-one-io/node-red-contrib-s7)
+### Common Connection Issues
 
+#### "Not connected" Error
+- **Check IP Address**: Verify the PLC IP address is correct and reachable
+- **Check Port**: Default S7 port is 102, ensure it's not blocked by firewall
+- **Check Rack/Slot**: Verify rack and slot numbers match your PLC configuration
+- **Network Connectivity**: Test with ping to ensure network connectivity
 
-## Support
+#### "Timeout" Errors
+- **Increase Timeout**: Try increasing the timeout value in the endpoint configuration
+- **Network Latency**: Check for network congestion or high latency
+- **PLC Load**: High PLC CPU usage can cause timeouts
 
-Community support is offered on a best-effort basis via GitHub Issues. For commercial support, please contact us by sending an e-mail to [st-one@st-one.io](mailto:st-one@st-one.io).
+#### S7-1200/1500 Connection Issues
+- **Disable Optimized Block Access**: Must be disabled for accessible DBs
+- **Enable PUT/GET**: Check "Permit access with PUT/GET" in CPU properties
+- **DB Access Rights**: Ensure DBs are not write-protected
 
+### Variable Addressing Issues
+
+#### "Variable Unknown" Error
+- **Check Address Format**: Ensure addresses follow the correct S7 format
+- **Case Sensitivity**: Variable names are case-sensitive
+- **Address Validation**: Use the variable addressing table as reference
+
+#### Data Type Mismatches
+- **String Lengths**: Remember strings use 2 extra bytes for length information
+- **Bit Addressing**: Use X notation for bit access (e.g., `DB1,X0.0`)
+- **Endianness**: Use R-prefixed types for little-endian interpretation
+
+### Performance Issues
+
+#### High CPU Usage
+- **Increase Cycle Time**: Reduce polling frequency if not critical
+- **Optimize Variable Count**: Monitor only necessary variables
+- **Use Diff Mode**: Enable diff to reduce message frequency
+
+#### Memory Issues
+- **Large Variable Tables**: Consider splitting into multiple endpoints
+- **Message Queuing**: Monitor Node-RED message queue depth
+
+### Dynamic Variable Management Issues
+
+#### Variables Not Updating After `setvartable`
+- **Check Address Format**: Ensure new addresses are correctly formatted
+- **Verify S7 In Node Mode**: Some modes may not adapt immediately
+- **Check Error Messages**: Look for validation errors in Node-RED logs
+
+### Getting Help
+
+1. **Enable Debug Logging**: Set Node-RED logging to debug level
+2. **Check Node-RED Logs**: Look for detailed error messages
+3. **Test with Simple Configuration**: Start with basic setup and add complexity
+4. **Community Support**: Use Node-RED forum or GitHub issues
+
+## Example Flows
+
+### Basic Monitoring Flow
+```json
+[
+  {
+    "id": "basic_endpoint",
+    "type": "s7 endpoint",
+    "name": "My PLC",
+    "address": "192.168.1.100",
+    "port": "102",
+    "rack": "0",
+    "slot": "1",
+    "cycletime": "1000",
+    "vartable": [
+      {"name": "temperature", "addr": "DB1,REAL0"},
+      {"name": "pressure", "addr": "DB1,REAL4"}
+    ]
+  }
+]
+```
+
+### Complete Example with All Node Types
+
+See the included [example flow](test/setvartable_example_flow.json:1) for a comprehensive demonstration of dynamic variable management.
+
+## Acknowledgments
+
+This project builds upon the excellent work of several open source projects:
+
+- **ST-One Ltda.** and **Guilherme Francescon Cittolin** for the original [node-red-contrib-s7](https://github.com/st-one-io/node-red-contrib-s7) implementation
+- **Ali-Pay** for their [enhanced version](https://github.com/ali-pay/node-red-contrib-s7) with additional features like dynamic variable table management
+- The **nodes7** library developers for providing the core S7 communication functionality
+- The **Node-RED** community for creating an amazing platform for IoT development
+
+## Support and Contributing
+
+### Getting Help
+- **Node-RED Forum**: Share your experiences on the [Node-RED forum](https://discourse.nodered.org/)
+- **GitHub Issues**: Report bugs or request features on [GitHub](https://github.com/oriolrius/node-red-contrib-s7/issues)
+- **Documentation**: Check this README and the example flows for guidance
+
+### Contributing
+Contributions are welcome! Please:
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes with tests
+4. Submit a pull request
+
+### Reporting Issues
+When reporting issues, please include:
+- Node-RED version
+- Node.js version
+- PLC model and firmware version
+- Complete error messages
+- Minimal flow to reproduce the issue
 
 ## License
-Copyright: (c) 2016-2022, ST-One Ltda., Guilherme Francescon Cittolin <guilherme@st-one.io>
 
 GNU General Public License v3.0+ (see [LICENSE](LICENSE) or https://www.gnu.org/licenses/gpl-3.0.txt)

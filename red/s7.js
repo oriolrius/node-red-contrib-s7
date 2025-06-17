@@ -1,8 +1,4 @@
 //@ts-check
-/*
-  Copyright: (c) 2016-2020, St-One Ltda., Guilherme Francescon Cittolin <guilherme@st-one.io>
-  GNU General Public License v3.0+ (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
-*/
 
 function nrInputShim(node, fn) {
     node.on('input', function (msg, send, done) {
@@ -39,7 +35,7 @@ var tools = require('../src/tools.js');
 module.exports = function (RED) {
     "use strict";
 
-    var nodes7 = require('@st-one-io/nodes7');
+    var nodes7 = require('nodes7');
     var EventEmitter = require('events').EventEmitter;
 
     // ---------- Discovery Endpoints ----------

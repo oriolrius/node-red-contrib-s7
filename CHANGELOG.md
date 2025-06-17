@@ -1,6 +1,19 @@
+Version: 3.5.0
+------------
+ - Implements `setvartable` function in S7 Control node for dynamic variable table management
+ - Enables runtime reconfiguration of PLC variable monitoring without requiring flow restart
+ - All S7 In nodes automatically adapt to new variable table configurations
+ - Adds comprehensive example flow demonstrating practical usage scenarios:
+   - Recipe-based variable switching for manufacturing processes
+   - Conditional monitoring based on production line selection
+   - Time-based variable configuration for shift management
+ - Supports complete variable table replacement during operation
+ - Maintains backward compatibility with existing flows
+ - Improves flexibility for applications requiring dynamic PLC monitoring configurations
+
 Version: 3.0.0
 ------------
- - Migrate underlying library to @st-one-io/node-s7
+ - Migrate underlying library to nodes7
  - Remove optional dependency on mpi-s7 (project is now split into this and `node-red-contrib-mpi-s7`)
  - Added tag validation on the editor
 

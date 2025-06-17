@@ -1,17 +1,17 @@
 {
-    "name": "@ali-pay/node-red-contrib-s7",
-    "version": "3.4.0",
+    "name": "node-red-contrib-s7",
+    "version": "3.5.0",
     "description": "A Node-RED node to interact with Siemens S7 PLCs",
     "main": "index.js",
     "dependencies": {
-        "@st-one-io/nodes7": "1.1.0"
+        "nodes7": "^0.3.13"
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/ali-pay/node-red-contrib-s7.git"
+        "url": "https://github.com/oriolrius/node-red-contrib-s7.git"
     },
     "bugs": {
-        "url": "https://github.com/ali-pay/node-red-contrib-s7/issues"
+        "url": "https://github.com/oriolrius/node-red-contrib-s7/issues"
     },
     "scripts": {
         "publish": "npm publish"
@@ -33,6 +33,6 @@
             "s7": "red/s7.js"
         }
     },
-    "author": "ST-One Ltda.",
+    "author": "Oriol Rius",
     "license": "GPL-3.0-or-later"
 }
