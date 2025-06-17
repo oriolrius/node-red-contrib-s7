@@ -1,6 +1,6 @@
 {
     "name": "@oriolrius/node-red-contrib-s7",
-    "version": "4.0.5",
+    "version": "4.0.6",
     "description": "A Node-RED node to interact with Siemens S7 PLCs",
     "dependencies": {
         "nodes7": "^0.3.13"
@@ -13,7 +13,6 @@
         "url": "https://github.com/oriolrius/node-red-contrib-s7/issues"
     },
     "scripts": {
-        "publish": "npm publish",
         "release": "./scripts/release.sh",
         "release:patch": "./scripts/release.sh patch",
         "release:minor": "./scripts/release.sh minor",
