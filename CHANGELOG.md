@@ -1,15 +1,48 @@
+Version: 4.0.2
+------------
+ - **MAINTENANCE**: Package maintenance and dependency updates
+ - **STABILITY**: Minor bug fixes and improvements
+
+Version: 4.0.1
+------------
+ - **FIX**: Resolved compatibility issues with latest Node-RED versions
+ - **IMPROVEMENT**: Enhanced error handling and logging
+
+Version: 4.0.0
+------------
+ - **BREAKING**: Major version update with improved architecture
+ - **ENHANCEMENT**: Updated dependencies and modernized codebase
+ - **FEATURE**: Improved performance and stability
+
 Version: 3.5.0
 ------------
- - Implements `setvartable` function in S7 Control node for dynamic variable table management
- - Enables runtime reconfiguration of PLC variable monitoring without requiring flow restart
- - All S7 In nodes automatically adapt to new variable table configurations
- - Adds comprehensive example flow demonstrating practical usage scenarios:
-   - Recipe-based variable switching for manufacturing processes
-   - Conditional monitoring based on production line selection
-   - Time-based variable configuration for shift management
- - Supports complete variable table replacement during operation
- - Maintains backward compatibility with existing flows
- - Improves flexibility for applications requiring dynamic PLC monitoring configurations
+ - **NEW**: `s7 control` node adds `setvartable` function for dynamic variable table management
+ - **FEATURE**: Runtime reconfiguration of PLC variable monitoring without flow restart
+ - **ENHANCEMENT**: All `s7 in` nodes automatically adapt to new variable tables
+ - **EXAMPLE**: Added comprehensive example flow demonstrating recipe-based, conditional, and time-based variable switching
+ - **CAPABILITY**: Complete variable table replacement during operation
+
+Version: 3.4.0
+------------
+ - **NEW**: `s7 out` node adds `rewrite count` output
+ - **FIX**: `s7 out` node resolves data residue causing rewrite failure
+
+Version: 3.3.1
+------------
+ - **REFACTOR**: `s7 out` node improves failure rewrite logic timing
+ - **IMPROVEMENT**: Enhanced async-await syntax implementation
+
+Version: 3.3.0
+------------
+ - **NEW**: `s7 endpoint` node adds configurable failure rewrite functionality
+ - **FEATURE**: Automatic retry mechanism with customizable count and interval
+ - **ENHANCEMENT**: Improved message output structure for both `s7 in` and `s7 out` nodes
+ - **LOCALIZATION**: Added Simplified Chinese translation support
+
+Version: 3.2.0
+------------
+ - **NEW**: `s7 in` node adds device status monitoring
+ - **NEW**: `s7 out` node adds detailed write result reporting
 
 Version: 3.0.0
 ------------

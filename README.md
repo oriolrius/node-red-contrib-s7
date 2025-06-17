@@ -55,35 +55,7 @@ npm install @oriolrius/node-red-contrib-s7
 
 ## Update Log
 
-### v3.5.0
-
-- **NEW**: [`s7 control`](red/s7.js:677) node adds [`setvartable`](red/s7.js:695) function for dynamic variable table management
-- **FEATURE**: Runtime reconfiguration of PLC variable monitoring without flow restart
-- **ENHANCEMENT**: All [`s7 in`](red/s7.js:381) nodes automatically adapt to new variable tables
-- **EXAMPLE**: Added comprehensive [example flow](test/setvartable_example_flow.json:1) demonstrating recipe-based, conditional, and time-based variable switching
-- **CAPABILITY**: Complete variable table replacement during operation
-
-### v3.4.0
-
-- **NEW**: [`s7 out`](red/s7.js:510) node adds `rewrite count` output
-- **FIX**: [`s7 out`](red/s7.js:510) node resolves data residue causing rewrite failure
-
-### v3.3.1
-
-- **REFACTOR**: [`s7 out`](red/s7.js:510) node improves failure rewrite logic timing
-- **IMPROVEMENT**: Enhanced async-await syntax implementation
-
-### v3.3.0
-
-- **NEW**: [`s7 endpoint`](red/s7.js:144) node adds configurable failure rewrite functionality
-- **FEATURE**: Automatic retry mechanism with customizable count and interval
-- **ENHANCEMENT**: Improved message output structure for both [`s7 in`](red/s7.js:381) and [`s7 out`](red/s7.js:510) nodes
-- **LOCALIZATION**: Added Simplified Chinese translation support
-
-### v3.2.0
-
-- **NEW**: [`s7 in`](red/s7.js:381) node adds device status monitoring
-- **NEW**: [`s7 out`](red/s7.js:510) node adds detailed write result reporting
+For detailed version history and changes, see [CHANGELOG.md](CHANGELOG.md).
 
 ## Node Types
 
