@@ -579,12 +579,40 @@ Some addressing examples:
 
 ## Handling Endpoint Errors
 
-The S7 endpoint now surfaces connection and read-cycle issues through a dedicated `__ERROR__` event. All runtime nodes (`s7 in`, `s7 out`, and `s7 control`) subscribe to this event and automatically call `node.error` so that a standard [Catch](https://nodered.org/docs/user-guide/editor/workspace/nodes#catch) node can react to transport problems without relying on log scraping.
+The S7 endpoint configuration node emits connection and read-cycle errors through a dedicated `__ERROR__` event. All runtime nodes (`s7 in`, `s7 out`, and `s7 control`) subscribe to this event and re-emit the errors **both** through their outputs and via `node.error()`, enabling two error-handling approaches:
 
-- Each emitted error produces a message that your Catch node can inspect. `msg.error` still carries the driver error (including the original `info` block when available), while `msg._s7` now also exposes a `_s7.request` object describing the failing area/DB/address/length alongside the endpoint name, IP address, connection status, and a timestamp.
-- Place a Catch node in your flow, scope it to the relevant S7 nodes, and connect it to a Debug node (set to display the complete message) to observe PLC communication faults in real time.
-- The runtime nodes do not send the error on their regular outputs, so existing flows remain unaffected; the Catch node provides the dedicated error path.
-- Advanced users who maintain custom nodes can listen to the configuration node directly: `endpointNode.on('__ERROR__', ({ error, message }) => {/* custom logging */});`.
+### Method 1: Using Catch Nodes (Recommended)
+
+1. Add a **Catch node** to your flow
+2. Configure it to scope to the relevant S7 nodes (s7 in, s7 out, s7 control)
+3. Connect it to a Debug node or your error-handling logic
+
+When an endpoint error occurs, the Catch node receives:
+- `msg.error` - The driver error object (name, message, code, and when available, the `info` block with request details)
+- `msg.payload.error` - Error summary for easier inspection
+- `msg._s7` - PLC metadata:
+  - `plc` - Endpoint name
+  - `ip` - PLC IP address
+  - `status` - Connection status ('online'/'offline')
+  - `time` - Error timestamp
+  - `request` - (when available) Failing operation details (area, db, address, length, spec)
+
+### Method 2: Using Node Outputs
+
+Connect the output of your S7 nodes directly to error-handling nodes. When an endpoint error occurs, the same error message (with `msg.error` and `msg._s7` fields) is sent on the node's regular output.
+
+**Note:** This is in addition to normal data messages. Filter using `msg.error` to distinguish error messages from data messages.
+
+### Advanced Usage
+
+Custom nodes can listen directly to the endpoint configuration node:
+```javascript
+endpointNode.on('__ERROR__', ({ error, message }) => {
+    // Custom error handling
+});
+```
+
+**Important:** Errors still appear in Node-RED logs and the debug panel for troubleshooting.
 
 ## Troubleshooting
 

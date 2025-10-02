@@ -495,7 +495,9 @@ module.exports = function (RED) {
 
         function onEndpointError(event) {
             var payload = prepareEndpointErrorEvent(node.endpoint, event);
+            payload.message.error = payload.error;
             node.error(payload.error, payload.message);
+            node.send(payload.message);
         }
 
         function sendMsg(data, key, status) {
@@ -637,7 +639,9 @@ module.exports = function (RED) {
 
         function onEndpointError(event) {
             var payload = prepareEndpointErrorEvent(node.endpoint, event);
+            payload.message.error = payload.error;
             node.error(payload.error, payload.message);
+            node.send(payload.message);
         }
 
         function onEndpointStatus(s) {
@@ -811,7 +815,9 @@ module.exports = function (RED) {
 
         function onEndpointError(event) {
             var payload = prepareEndpointErrorEvent(node.endpoint, event);
+            payload.message.error = payload.error;
             node.error(payload.error, payload.message);
+            node.send(payload.message);
         }
 
         function onEndpointStatus(s) {
