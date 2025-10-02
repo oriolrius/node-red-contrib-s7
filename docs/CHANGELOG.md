@@ -1,7 +1,10 @@
-Version: Unreleased
+Version: 4.3.0
 ------------
- - **ENHANCEMENT**: Emitted a dedicated `__ERROR__` event from the S7 endpoint, forwarding structured payloads (including `_s7.request` details and generated `_msgid`s) through runtime nodes for Catch node integration
- - **DOCUMENTATION**: Documented the enriched error payload (`msg.error` + `_s7.request`) and updated the advanced listener example
+ - **ENHANCEMENT**: Dual error-handling paths for S7 endpoint errors via both node.error() and node outputs
+ - **FEATURE**: Errors now emitted through node.send() in addition to node.error() for inline error handling
+ - **USABILITY**: Added msg.error field to error messages for easier filtering
+ - **COMPATIBILITY**: Catch nodes continue to work as before, now with option to handle errors via outputs
+ - **DOCUMENTATION**: Comprehensive README update with examples for both error-handling methods
 
 Version: 4.2.0
 ------------
