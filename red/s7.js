@@ -133,15 +133,95 @@ module.exports = function (RED) {
         return obj;
     }
 
+    function extractRequestInfo(error) {
+        if (!error || typeof error !== 'object') {
+            return undefined;
+        }
+
+        var info = error.info;
+        if (!info || typeof info !== 'object') {
+            return undefined;
+        }
+
+        var request = {};
+        if (info.area !== undefined) request.area = info.area;
+        if (info.dbNumber !== undefined) {
+            request.db = info.dbNumber;
+        } else if (info.db !== undefined) {
+            request.db = info.db;
+        }
+        if (info.byteAddress !== undefined) {
+            request.address = info.byteAddress;
+        } else if (info.address !== undefined) {
+            request.address = info.address;
+        }
+        if (info.length !== undefined) request.length = info.length;
+        if (info.spec !== undefined) request.spec = info.spec;
+
+        return Object.keys(request).length ? request : undefined;
+    }
+
+    function describeError(error) {
+        if (!error) {
+            return undefined;
+        }
+
+        if (typeof error !== 'object') {
+            return { message: String(error) };
+        }
+
+        var summary = {};
+        if (error.name) summary.name = error.name;
+        if (error.message) summary.message = error.message;
+        if (error.code !== undefined) summary.code = error.code;
+        if (error.errno !== undefined) summary.errno = error.errno;
+        if (error.syscall !== undefined) summary.syscall = error.syscall;
+
+        var request = extractRequestInfo(error);
+        if (request) summary.info = request;
+
+        if (!Object.keys(summary).length) {
+            summary.message = String(error);
+        }
+
+        return summary;
+    }
+
     function createEndpointErrorMessage(endpoint, error) {
-        return {
-            error,
+        var request = extractRequestInfo(error);
+        var summary = describeError(error);
+        var message = {
+            _msgid: RED.util.generateId(),
+            payload: {},
             _s7: {
                 plc: endpoint.name,
                 ip: endpoint.endpoint && endpoint.endpoint._connOptsTcp ? endpoint.endpoint._connOptsTcp.host : 'unknown',
                 status: endpoint.getStatus() === 'online' ? 'online' : 'offline',
-                time: new Date(),
+                time: new Date()
             }
+        };
+
+        if (request) {
+            message._s7.request = request;
+        }
+
+        if (summary) {
+            message.payload.error = summary;
+        }
+
+        return message;
+    }
+
+    function prepareEndpointErrorEvent(endpoint, payload) {
+        if (payload && typeof payload === 'object' && payload.error !== undefined && payload.message) {
+            return payload;
+        }
+
+        var error = payload && payload.error ? payload.error : payload;
+
+        return {
+            error: error,
+            message: createEndpointErrorMessage(endpoint, error)
         };
     }
 
@@ -328,8 +408,9 @@ module.exports = function (RED) {
         function doCycle() {
             if (!readInProgress && connected) {
                 itemGroup.readAllItems().then(cycleCallback).catch(e => {
-                    node.emit(ERROR_EVENT, e);
-                    node.error(e, {});
+                    var event = prepareEndpointErrorEvent(node, e);
+                    node.emit(ERROR_EVENT, event);
+                    node.error(event.error, event.message);
                     readInProgress = false;
                 });
                 readInProgress = true;
@@ -371,8 +452,9 @@ module.exports = function (RED) {
         node.endpoint.on('disconnect', onDisconnect);
         node.endpoint.on('error', (e => {
             manageStatus('offline');
-            node.emit(ERROR_EVENT, e);
-            node.error(e, {});
+            var event = prepareEndpointErrorEvent(node, e);
+            node.emit(ERROR_EVENT, event);
+            node.error(event.error, event.message);
         }));
 
         itemGroup = new S7ItemGroup(node.endpoint);
@@ -411,8 +493,9 @@ module.exports = function (RED) {
             return node.error(RED._("s7.error.missingconfig"));
         }
 
-        function onEndpointError(error) {
-            node.error(error, createEndpointErrorMessage(node.endpoint, error));
+        function onEndpointError(event) {
+            var payload = prepareEndpointErrorEvent(node.endpoint, event);
+            node.error(payload.error, payload.message);
         }
 
         function sendMsg(data, key, status) {
@@ -552,8 +635,9 @@ module.exports = function (RED) {
             return node.error(RED._("s7.error.missingconfig"));
         }
 
-        function onEndpointError(error) {
-            node.error(error, createEndpointErrorMessage(node.endpoint, error));
+        function onEndpointError(event) {
+            var payload = prepareEndpointErrorEvent(node.endpoint, event);
+            node.error(payload.error, payload.message);
         }
 
         function onEndpointStatus(s) {
@@ -606,7 +690,7 @@ module.exports = function (RED) {
                     // Handle errors - done(e) doesn't work; need to use node.error(e)
                     // https://nodered.org/docs/creating-nodes/node-js#handling-errors
                     if (error) {
-                        node.error(error)
+                        node.error(error, msg)
                         node.send(msg)
                         return
                     }
@@ -725,8 +809,9 @@ module.exports = function (RED) {
             return node.error(RED._("s7.error.missingconfig"));
         }
 
-        function onEndpointError(error) {
-            node.error(error, createEndpointErrorMessage(node.endpoint, error));
+        function onEndpointError(event) {
+            var payload = prepareEndpointErrorEvent(node.endpoint, event);
+            node.error(payload.error, payload.message);
         }
 
         function onEndpointStatus(s) {

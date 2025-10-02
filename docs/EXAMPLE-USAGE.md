@@ -159,11 +159,11 @@ The S7 nodes use a specific address format:
 
 - The S7 endpoint emits a dedicated `__ERROR__` event whenever a read cycle fails or the underlying driver reports an error.
 - All runtime nodes (`s7 in`, `s7 out`, and `s7 control`) listen for that event and call `node.error` with a message that includes:
-  - `msg.error`: the actual error object
-  - `msg._s7`: endpoint metadata (name, IP, online/offline status, timestamp)
+  - `msg.error`: the underlying driver error (with its `info` block when present)
+  - `msg._s7`: endpoint metadata (name, IP, online/offline status, timestamp) plus a `_s7.request` helper when the driver tells us which area/DB/address/length failed
 - Add a Catch node to your flow, scope it to the relevant S7 nodes, and wire it to a Debug node to observe PLC communication issues in real time.
 - Existing outputs stay unchanged, so normal data processing is unaffected; the Catch node provides a dedicated error path.
-- Advanced flows can access the configuration node directly in custom code: `endpointNode.on('__ERROR__', err => {/* log */});`.
+- Advanced flows can access the configuration node directly in custom code: `endpointNode.on('__ERROR__', ({ error, message }) => {/* log */});`.
 
 ## Flow Description
 

@@ -1,7 +1,7 @@
 Version: Unreleased
 ------------
- - **ENHANCEMENT**: Emitted a dedicated `__ERROR__` event from the S7 endpoint and forward it through runtime nodes for Catch node integration
- - **DOCUMENTATION**: Documented the new error propagation behaviour and Catch node usage
+ - **ENHANCEMENT**: Emitted a dedicated `__ERROR__` event from the S7 endpoint, forwarding structured payloads (including `_s7.request` details and generated `_msgid`s) through runtime nodes for Catch node integration
+ - **DOCUMENTATION**: Documented the enriched error payload (`msg.error` + `_s7.request`) and updated the advanced listener example
 
 Version: 4.2.0
 ------------
