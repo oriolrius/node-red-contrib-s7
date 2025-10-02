@@ -148,10 +148,11 @@ The S7 nodes use a specific address format:
 // Input message
 {
     "function": "setvartable",
-    "vartable": [
+    "payload": [
         {"name": "new_var1", "addr": "DB2,INT0"},
         {"name": "new_var2", "addr": "DB2,REAL4"}
     ]
+    // Alternatively provide the same array via msg.vartable
 }
 ```
 

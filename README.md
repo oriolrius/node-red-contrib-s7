@@ -164,16 +164,18 @@ Manually triggers an immediate PLC read cycle
 #### `setvartable`
 Dynamically updates the variable table during runtime. Supports both array and text formats.
 
-**Array Format (Legacy):**
+**Array Format (msg.vartable or msg.payload):**
 ```json
 {
   "function": "setvartable",
-  "vartable": [
+  "payload": [
     {"name": "temperature", "addr": "DB1,REAL0"},
     {"name": "pressure", "addr": "DB1,REAL4"}
   ]
 }
 ```
+
+> 💡 Prefer `msg.payload` for new flows. `msg.vartable` remains supported for backward compatibility.
 
 **Text Format (New in v4.2.0):**
 ```json
@@ -189,6 +191,7 @@ Dynamically updates the variable table during runtime. Supports both array and t
 - Line breaks: Use `\n` or actual newlines
 - Whitespace: Automatically trimmed
 - Empty lines: Ignored
+- Works alongside array input on `msg.payload` or `msg.vartable`
 - Perfect for copy-paste from Excel/CSV files
 
 #### `ssl`
@@ -227,7 +230,7 @@ The `setvartable` function provides powerful runtime reconfiguration capabilitie
 
 ### How It Works
 
-1. **Variable Table Update**: The S7 Control node accepts a new variable table via `msg.vartable` (array format) or `msg.payload` (text format)
+1. **Variable Table Update**: The S7 Control node accepts a new variable table via `msg.payload` (array or text) or `msg.vartable` (array)
 2. **Automatic Propagation**: All S7 In nodes connected to the same endpoint automatically adapt to the new variables
 3. **Event-Driven Synchronization**: Uses the internal `__VARS_CHANGED__` event system to notify all nodes
 4. **Seamless Operation**: No interruption to existing flows or data processing
