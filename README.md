@@ -18,6 +18,7 @@ A Node-RED node to interact with Siemens S7 PLCs, providing comprehensive read/w
 - [Variable Addressing](#variable-addressing)
 - [Notes on S7-1200/1500](#notes-on-s7-12001500)
 - [Notes on Logo! 8](#notes-on-logo-8)
+- [Handling Endpoint Errors](#handling-endpoint-errors)
 - [Troubleshooting](#troubleshooting)
 - [Example Flows](#example-flows)
 - [Acknowledgments](#acknowledgments)
@@ -575,6 +576,43 @@ Some addressing examples:
 | `0`     | `DB1,BYTE0`              | R/W access  |
 | `1`     | `DB1,X1.3`               | R/W access Note: use booleans |
 | `2..3`  | `DB1,WORD2`              | R/W access  |
+
+## Handling Endpoint Errors
+
+The S7 endpoint configuration node emits connection and read-cycle errors through a dedicated `__ERROR__` event. All runtime nodes (`s7 in`, `s7 out`, and `s7 control`) subscribe to this event and re-emit the errors **both** through their outputs and via `node.error()`, enabling two error-handling approaches:
+
+### Method 1: Using Catch Nodes (Recommended)
+
+1. Add a **Catch node** to your flow
+2. Configure it to scope to the relevant S7 nodes (s7 in, s7 out, s7 control)
+3. Connect it to a Debug node or your error-handling logic
+
+When an endpoint error occurs, the Catch node receives:
+- `msg.error` - The driver error object (name, message, code, and when available, the `info` block with request details)
+- `msg.payload.error` - Error summary for easier inspection
+- `msg._s7` - PLC metadata:
+  - `plc` - Endpoint name
+  - `ip` - PLC IP address
+  - `status` - Connection status ('online'/'offline')
+  - `time` - Error timestamp
+  - `request` - (when available) Failing operation details (area, db, address, length, spec)
+
+### Method 2: Using Node Outputs
+
+Connect the output of your S7 nodes directly to error-handling nodes. When an endpoint error occurs, the same error message (with `msg.error` and `msg._s7` fields) is sent on the node's regular output.
+
+**Note:** This is in addition to normal data messages. Filter using `msg.error` to distinguish error messages from data messages.
+
+### Advanced Usage
+
+Custom nodes can listen directly to the endpoint configuration node:
+```javascript
+endpointNode.on('__ERROR__', ({ error, message }) => {
+    // Custom error handling
+});
+```
+
+**Important:** Errors still appear in Node-RED logs and the debug panel for troubleshooting.
 
 ## Troubleshooting
 
