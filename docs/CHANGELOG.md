@@ -1,3 +1,8 @@
+Version: 4.2.1 (Unreleased)
+------------
+ - **FIX**: Allow `setvartable` control messages to accept arrays via `msg.payload`
+ - **COMPATIBILITY**: Continue supporting `msg.vartable` arrays and text parsing without breaking existing flows
+
 Version: 4.2.0
 ------------
  - **FEATURE**: Added built-in text parsing to S7 Control setvartable function

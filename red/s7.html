@@ -1445,10 +1445,10 @@ Result:
 		<dd>
 			<strong>Purpose:</strong> Replace the entire variable table at runtime<br>
 			<strong>Input Options:</strong>
-			<ul>
-				<li><strong>Array format:</strong> <code>msg.vartable</code> = <code>[{name: "var1", addr: "DB1,X0.0"}]</code></li>
-				<li><strong>Text format (NEW):</strong> <code>msg.payload</code> = <code>"DB1,X0.0;motor_running\nDB1,INT2;temperature"</code></li>
-			</ul>
+                        <ul>
+                                <li><strong>Array format:</strong> Provide the array on <code>msg.payload</code> or <code>msg.vartable</code> &ndash; e.g. <code>[{name: "var1", addr: "DB1,X0.0"}]</code></li>
+                                <li><strong>Text format (NEW):</strong> <code>msg.payload</code> = <code>"DB1,X0.0;motor_running\nDB1,INT2;temperature"</code></li>
+                        </ul>
 			<strong>Text Format:</strong> One variable per line, format: <code>address;name</code><br>
 			<strong>Use case:</strong> Recipe-based variable sets, conditional monitoring, easy copy-paste from spreadsheets
 		</dd>
@@ -1644,7 +1644,7 @@ DB1,REAL4;speed_setpoint</pre>
 		<tr style="background-color: #f0f0f0;"><th style="border: 1px solid #ddd; padding: 4px;">Function</th><th style="border: 1px solid #ddd; padding: 4px;">Required Input</th><th style="border: 1px solid #ddd; padding: 4px;">Example</th></tr>
 		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>cycletime</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>msg.payload</code> (number)</td><td style="border: 1px solid #ddd; padding: 4px;"><code>{payload: 1000}</code></td></tr>
 		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>trigger</strong></td><td style="border: 1px solid #ddd; padding: 4px;">Any message</td><td style="border: 1px solid #ddd; padding: 4px;"><code>{}</code></td></tr>
-		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>setvartable</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>msg.vartable</code> (array) OR <code>msg.payload</code> (text)</td><td style="border: 1px solid #ddd; padding: 4px;"><code>{payload: "DB1,X0.0;motor\\nDB1,INT2;temp"}</code></td></tr>
+                <tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>setvartable</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>msg.payload</code> (array or text) OR <code>msg.vartable</code> (array)</td><td style="border: 1px solid #ddd; padding: 4px;"><code>{payload: [{name: "motor", addr: "DB1,X0.0"}]}</code></td></tr>
 		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>ssl</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>msg.payload.id, msg.payload.index</code></td><td style="border: 1px solid #ddd; padding: 4px;"><code>{payload: {id: 17, index: 0}}</code></td></tr>
 		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>upload-block</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>msg.payload.type, msg.payload.number</code></td><td style="border: 1px solid #ddd; padding: 4px;"><code>{payload: {type: "DB", number: 1}}</code></td></tr>
 	</table>
