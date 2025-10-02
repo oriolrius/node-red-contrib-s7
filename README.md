@@ -18,6 +18,7 @@ A Node-RED node to interact with Siemens S7 PLCs, providing comprehensive read/w
 - [Variable Addressing](#variable-addressing)
 - [Notes on S7-1200/1500](#notes-on-s7-12001500)
 - [Notes on Logo! 8](#notes-on-logo-8)
+- [Handling Endpoint Errors](#handling-endpoint-errors)
 - [Troubleshooting](#troubleshooting)
 - [Example Flows](#example-flows)
 - [Acknowledgments](#acknowledgments)
@@ -575,6 +576,15 @@ Some addressing examples:
 | `0`     | `DB1,BYTE0`              | R/W access  |
 | `1`     | `DB1,X1.3`               | R/W access Note: use booleans |
 | `2..3`  | `DB1,WORD2`              | R/W access  |
+
+## Handling Endpoint Errors
+
+The S7 endpoint now surfaces connection and read-cycle issues through a dedicated `__ERROR__` event. All runtime nodes (`s7 in`, `s7 out`, and `s7 control`) subscribe to this event and automatically call `node.error` so that a standard [Catch](https://nodered.org/docs/user-guide/editor/workspace/nodes#catch) node can react to transport problems without relying on log scraping.
+
+- Each emitted error produces a message with `msg.error` containing the error object and `msg._s7` populated with the endpoint name, IP address, connection status, and a timestamp.
+- Place a Catch node in your flow, scope it to the relevant S7 nodes, and connect it to a Debug node (set to display the complete message) to observe PLC communication faults in real time.
+- The runtime nodes do not send the error on their regular outputs, so existing flows remain unaffected; the Catch node provides the dedicated error path.
+- Advanced users who maintain custom nodes can listen to the configuration node directly: `endpointNode.on('__ERROR__', err => {/* custom logging */});`.
 
 ## Troubleshooting
 

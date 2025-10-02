@@ -1,3 +1,8 @@
+Version: Unreleased
+------------
+ - **ENHANCEMENT**: Emitted a dedicated `__ERROR__` event from the S7 endpoint and forward it through runtime nodes for Catch node integration
+ - **DOCUMENTATION**: Documented the new error propagation behaviour and Catch node usage
+
 Version: 4.2.0
 ------------
  - **FEATURE**: Added built-in text parsing to S7 Control setvartable function

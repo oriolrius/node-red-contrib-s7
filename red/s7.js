@@ -29,6 +29,7 @@ function equals(a, b) {
 }
 
 var MIN_CYCLE_TIME = 50;
+var ERROR_EVENT = '__ERROR__';
 
 var tools = require('../src/tools.js');
 
@@ -130,6 +131,18 @@ module.exports = function (RED) {
                 };
         }
         return obj;
+    }
+
+    function createEndpointErrorMessage(endpoint, error) {
+        return {
+            error,
+            _s7: {
+                plc: endpoint.name,
+                ip: endpoint.endpoint && endpoint.endpoint._connOptsTcp ? endpoint.endpoint._connOptsTcp.host : 'unknown',
+                status: endpoint.getStatus() === 'online' ? 'online' : 'offline',
+                time: new Date(),
+            }
+        };
     }
 
     function validateTSAP(num) {
@@ -315,6 +328,7 @@ module.exports = function (RED) {
         function doCycle() {
             if (!readInProgress && connected) {
                 itemGroup.readAllItems().then(cycleCallback).catch(e => {
+                    node.emit(ERROR_EVENT, e);
                     node.error(e, {});
                     readInProgress = false;
                 });
@@ -357,7 +371,8 @@ module.exports = function (RED) {
         node.endpoint.on('disconnect', onDisconnect);
         node.endpoint.on('error', (e => {
             manageStatus('offline');
-            node.error(e && e.toString(), {});
+            node.emit(ERROR_EVENT, e);
+            node.error(e, {});
         }));
 
         itemGroup = new S7ItemGroup(node.endpoint);
@@ -394,6 +409,10 @@ module.exports = function (RED) {
         node.endpoint = RED.nodes.getNode(config.endpoint);
         if (!node.endpoint) {
             return node.error(RED._("s7.error.missingconfig"));
+        }
+
+        function onEndpointError(error) {
+            node.error(error, createEndpointErrorMessage(node.endpoint, error));
         }
 
         function sendMsg(data, key, status) {
@@ -458,6 +477,8 @@ module.exports = function (RED) {
         // 🟢 Guarda les funcions d’escolta per poder-les treure després
         node._listeners = [];
 
+        node.endpoint.on(ERROR_EVENT, onEndpointError);
+
         function updateVariableListeners(varKeys) {
             // Elimina escoltes anteriors
             node._listeners.forEach(({event, fn}) => node.endpoint.removeListener(event, fn));
@@ -512,6 +533,7 @@ module.exports = function (RED) {
         node._listeners.push({event: '__STATUS__', fn: onEndpointStatus});
 
         node.on('close', function (done) {
+            node.endpoint.removeListener(ERROR_EVENT, onEndpointError);
             node._listeners.forEach(({event, fn}) => node.endpoint.removeListener(event, fn));
             done();
         });
@@ -528,6 +550,10 @@ module.exports = function (RED) {
         node.endpoint = RED.nodes.getNode(config.endpoint);
         if (!node.endpoint) {
             return node.error(RED._("s7.error.missingconfig"));
+        }
+
+        function onEndpointError(error) {
+            node.error(error, createEndpointErrorMessage(node.endpoint, error));
         }
 
         function onEndpointStatus(s) {
@@ -675,9 +701,11 @@ module.exports = function (RED) {
 
         node.status(generateStatus(node.endpoint.getStatus(), statusVal));
         node.endpoint.on('__STATUS__', onEndpointStatus);
+        node.endpoint.on(ERROR_EVENT, onEndpointError);
 
         node.on('close', function (done) {
             node.endpoint.removeListener('__STATUS__', onEndpointStatus);
+            node.endpoint.removeListener(ERROR_EVENT, onEndpointError);
             done();
         });
 
@@ -695,6 +723,10 @@ module.exports = function (RED) {
         node.endpoint = RED.nodes.getNode(config.endpoint);
         if (!node.endpoint) {
             return node.error(RED._("s7.error.missingconfig"));
+        }
+
+        function onEndpointError(error) {
+            node.error(error, createEndpointErrorMessage(node.endpoint, error));
         }
 
         function onEndpointStatus(s) {
@@ -824,9 +856,11 @@ module.exports = function (RED) {
 
         nrInputShim(node, onMessage);
         node.endpoint.on('__STATUS__', onEndpointStatus);
+        node.endpoint.on(ERROR_EVENT, onEndpointError);
 
         node.on('close', function (done) {
             node.endpoint.removeListener('__STATUS__', onEndpointStatus);
+            node.endpoint.removeListener(ERROR_EVENT, onEndpointError);
             done();
         });
 
