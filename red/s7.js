@@ -32,6 +32,7 @@ var MIN_CYCLE_TIME = 50;
 var ERROR_EVENT = '__ERROR__';
 
 var tools = require('../src/tools.js');
+var { parseVarTableInput } = require('../src/vartable.js');
 
 module.exports = function (RED) {
     "use strict";
@@ -829,42 +830,19 @@ module.exports = function (RED) {
             let func = config.function || msg.function;
             switch (func) {
                 case 'setvartable':
-                    var vartable = [];
-                    
-                    // Check if we have a vartable array (legacy mode)
-                    if (Array.isArray(msg.vartable) && msg.vartable.length) {
-                        vartable = msg.vartable;
-                    } 
-                    // Check for text parsing mode (new feature)
-                    else if (typeof msg.payload === 'string' && msg.payload.trim()) {
-                        // Parse text format: "address;name" per line
-                        var lines = msg.payload.trim().split('\n');
-                        lines.forEach(function(line) {
-                            if (line.trim()) {
-                                var parts = line.split(';');
-                                if (parts.length === 2) {
-                                    var addr = parts[0].trim();
-                                    var name = parts[1].trim();
-                                    if (addr && name) {
-                                        vartable.push({
-                                            name: name,
-                                            addr: addr
-                                        });
-                                    }
-                                }
-                            }
-                        });
-                    }
-                    
-                    // Validate we have variables to set
-                    if (!Array.isArray(vartable) || !vartable.length) {
-                        done('vartable missing or invalid. Expected either msg.vartable array or msg.payload text format "address;name" per line');
+                    var parsed = parseVarTableInput(msg);
+                    if (parsed.error) {
+                        done(parsed.error);
                         return;
                     }
-                    
-                    node.endpoint.setVars(vartable);
+                    if (parsed.ignored.length) {
+                        node.warn(`setvartable: ignored ${parsed.ignored.length} invalid entr${parsed.ignored.length === 1 ? 'y' : 'ies'} from ${parsed.source} (each needs a name and an address): ${parsed.ignored.join(', ')}`);
+                    }
+
+                    node.endpoint.setVars(parsed.vartable);
                     // Return the new list for output
-                    msg.payload = {vartable: vartable};
+                    msg.vartable = parsed.vartable;
+                    msg.payload = {vartable: parsed.vartable};
                     send(msg);
                     done();
                     break;

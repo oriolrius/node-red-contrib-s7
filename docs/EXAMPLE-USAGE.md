@@ -155,6 +155,8 @@ The S7 nodes use a specific address format:
 }
 ```
 
+The same array can be sent in `msg.payload` (or `msg.payload.vartable`, as output by a previous `setvartable`), for example straight from a File or HTTP node.
+
 ## Handling Endpoint Errors
 
 - The S7 endpoint emits a dedicated `__ERROR__` event whenever a read cycle fails or the underlying driver reports an error.

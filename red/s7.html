@@ -1446,9 +1446,11 @@ Result:
 			<strong>Purpose:</strong> Replace the entire variable table at runtime<br>
 			<strong>Input Options:</strong>
 			<ul>
-				<li><strong>Array format:</strong> <code>msg.vartable</code> = <code>[{name: "var1", addr: "DB1,X0.0"}]</code></li>
-				<li><strong>Text format (NEW):</strong> <code>msg.payload</code> = <code>"DB1,X0.0;motor_running\nDB1,INT2;temperature"</code></li>
+				<li><strong>Array format:</strong> <code>msg.vartable</code> or <code>msg.payload</code> = <code>[{name: "var1", addr: "DB1,X0.0"}]</code></li>
+				<li><strong>Output of a previous setvartable:</strong> <code>msg.payload.vartable</code> (same array), so the result can be fed back or saved and reloaded as is</li>
+				<li><strong>Text format:</strong> <code>msg.payload</code> = <code>"DB1,X0.0;motor_running\nDB1,INT2;temperature"</code></li>
 			</ul>
+			<strong>Precedence:</strong> the first source present is used, in the order above. Entries without a name or an address are skipped with a warning; if none is valid, the table is not changed and an error is reported.<br>
 			<strong>Text Format:</strong> One variable per line, format: <code>address;name</code><br>
 			<strong>Use case:</strong> Recipe-based variable sets, conditional monitoring, easy copy-paste from spreadsheets
 		</dd>
@@ -1513,7 +1515,7 @@ Stop automatic reading:
 Configuration:
 • Function: Set Variable Table
 
-Method 1 - Array format (legacy):
+Method 1 - Array format (msg.vartable, or the same array in msg.payload):
 {
   "vartable": [
     {"name": "temp_setpoint", "addr": "DB10,REAL0"},
@@ -1587,7 +1589,7 @@ DB1,REAL4;speed_setpoint</pre>
 		<li><strong>Easy spreadsheet import:</strong> Copy-paste from Excel/CSV</li>
 		<li><strong>Human readable:</strong> Clear text format</li>
 		<li><strong>Backward compatible:</strong> Array format still works</li>
-		<li><strong>Error handling:</strong> Invalid lines are skipped</li>
+		<li><strong>Error handling:</strong> Invalid lines are skipped with a warning</li>
 	</ul>
 
 	<h3>🎯 Best Practices</h3>
@@ -1644,7 +1646,7 @@ DB1,REAL4;speed_setpoint</pre>
 		<tr style="background-color: #f0f0f0;"><th style="border: 1px solid #ddd; padding: 4px;">Function</th><th style="border: 1px solid #ddd; padding: 4px;">Required Input</th><th style="border: 1px solid #ddd; padding: 4px;">Example</th></tr>
 		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>cycletime</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>msg.payload</code> (number)</td><td style="border: 1px solid #ddd; padding: 4px;"><code>{payload: 1000}</code></td></tr>
 		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>trigger</strong></td><td style="border: 1px solid #ddd; padding: 4px;">Any message</td><td style="border: 1px solid #ddd; padding: 4px;"><code>{}</code></td></tr>
-		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>setvartable</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>msg.vartable</code> (array) OR <code>msg.payload</code> (text)</td><td style="border: 1px solid #ddd; padding: 4px;"><code>{payload: "DB1,X0.0;motor\\nDB1,INT2;temp"}</code></td></tr>
+		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>setvartable</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>msg.vartable</code> or <code>msg.payload</code> (array), <code>msg.payload.vartable</code>, or <code>msg.payload</code> (text)</td><td style="border: 1px solid #ddd; padding: 4px;"><code>{payload: "DB1,X0.0;motor\\nDB1,INT2;temp"}</code></td></tr>
 		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>ssl</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>msg.payload.id, msg.payload.index</code></td><td style="border: 1px solid #ddd; padding: 4px;"><code>{payload: {id: 17, index: 0}}</code></td></tr>
 		<tr><td style="border: 1px solid #ddd; padding: 4px;"><strong>upload-block</strong></td><td style="border: 1px solid #ddd; padding: 4px;"><code>msg.payload.type, msg.payload.number</code></td><td style="border: 1px solid #ddd; padding: 4px;"><code>{payload: {type: "DB", number: 1}}</code></td></tr>
 	</table>
