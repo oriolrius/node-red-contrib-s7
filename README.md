@@ -44,8 +44,8 @@ npm install @oriolrius/node-red-contrib-s7
 ```
 
 **Requirements:**
-- Node.js version 10 or greater
-- Node-RED version 1.0 or greater
+- Node-RED 3.x, 4.x or 5.x (every release is tested end to end on Node-RED 3.1, 4.1 and 5.0)
+- The Node.js version your Node-RED needs (Node-RED 5 requires Node.js 22.9 or later)
 
 ## Quick Start
 
