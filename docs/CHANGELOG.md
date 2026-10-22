@@ -1,3 +1,14 @@
+Version: 4.4.0
+------------
+ - **FEATURE**: S7 Control `setvartable` accepts the variable table as an array in `msg.payload`, or in `msg.payload.vartable` (its own output), besides `msg.vartable` and the text format
+ - **USABILITY**: Entries or text lines without a name or an address are reported with a warning instead of being dropped silently; if none is valid, the table is left unchanged and an error is reported (an all-invalid `msg.vartable` used to empty it)
+ - **FIX**: Text format splits on the first `;` only, so names may contain `;`; Windows line endings are handled
+ - **FIX**: Editor: an endpoint saved or imported without the TSAP fields (rack/slot mode), or without rack/slot (TSAP mode), is no longer flagged as invalid; the TSAP validator crashed on missing values
+ - **FIX**: Editor scripts run in their own scope, so their helpers can no longer collide with other installed packages
+ - **COMPATIBILITY**: Node-RED 5 supported; tested on Node-RED 3.1, 4.1 and 5.0
+ - **TESTS**: Parser unit tests and an end-to-end test against a simulated S7 PLC (python-snap7), run in CI on Node-RED 3, 4 and 5
+ - **CI**: Releases published with npm Trusted Publishing (OIDC) after unit tests on Node.js 18/22/24
+
 Version: 4.3.0
 ------------
  - **ENHANCEMENT**: Dual error-handling paths for S7 endpoint errors via both node.error() and node outputs
