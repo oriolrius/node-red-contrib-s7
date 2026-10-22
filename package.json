@@ -7,12 +7,14 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/oriolrius/node-red-contrib-s7.git"
+        "url": "git+https://github.com/oriolrius/node-red-contrib-s7.git"
     },
     "bugs": {
         "url": "https://github.com/oriolrius/node-red-contrib-s7/issues"
     },
     "scripts": {
+        "test": "node tests/vartable.test.js",
+        "test:e2e": "node tests/e2e/setvartable.e2e.js",
         "release": "./scripts/release.sh",
         "release:patch": "./scripts/release.sh patch",
         "release:minor": "./scripts/release.sh minor",
