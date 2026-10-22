@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * End-to-end test of S7 Control "setvartable" against a simulated S7 PLC
+ * End-to-end test of S7 Control "setvartable" and S7 Out writes against a simulated S7 PLC
  * (python-snap7 server, started with uv) and an embedded Node-RED runtime.
  * Run from the project root: npm run test:e2e   (needs uv and tests/node_modules)
  */
@@ -115,6 +115,46 @@ async function main() {
             assert.strictEqual(ctlOut.length, before);
             last = null;
             await readsExactly({ temperature: 21.5 }, 'unchanged table');
+        });
+
+        // --- Writes (S7 Out): a multi-item request with odd-length items exercises the
+        // fill bytes between data items (broken in @st-one-io/nodes7 1.1.2, fixed in @oriolrius/nodes7 1.1.3)
+        await RED.runtime.flows.setFlows({ flows: { flows: [
+            { id: 'tab', type: 'tab', label: 'e2e' },
+            { id: 'ep', type: 's7 endpoint', transport: 'iso-on-tcp', address: '127.0.0.1', port: String(PORT), rack: '0', slot: '2', connmode: 'rack-slot', cycletime: 300, timeout: 2000,
+                vartable: [{ name: 'pressure', addr: 'DB1,REAL4' }, { name: 'b1', addr: 'DB1,BYTE20' }, { name: 'b2', addr: 'DB1,BYTE21' }, { name: 'b3', addr: 'DB1,BYTE23' },
+                    { name: 'flag', addr: 'DB1,X30.3' }, { name: 'counter2', addr: 'DB1,INT32' }] },
+            { id: 'in', type: 's7 in', z: 'tab', endpoint: 'ep', mode: 'all', diff: false, wires: [[]] },
+            { id: 'out', type: 's7 out', z: 'tab', endpoint: 'ep', variable: '', wires: [[]] }
+        ] }, deploymentType: 'full' });
+        const inNode = await waitFor(() => RED.nodes.getNode('out') && RED.nodes.getNode('in'), 'write flow start');
+        const out = RED.nodes.getNode('out');
+        let reads = null;
+        const outMsgs = [];
+        inNode.send = msg => { reads = msg.payload; };
+        out.send = msg => { outMsgs.push(msg); };
+        await waitFor(() => reads, 'first read of the write flow');
+        const write = async (variable, payload) => {
+            const before = outMsgs.length;
+            out.receive({ variable, payload });
+            return waitFor(() => outMsgs.length > before && outMsgs[outMsgs.length - 1], `write result for ${variable}`);
+        };
+        const readsInclude = (expected, what) => waitFor(() => reads && Object.entries(expected).every(([k, v]) => reads[k] === v) && reads, what);
+
+        await run('S7 Out writes a single REAL and reads it back', async () => {
+            const res = await write('pressure', 3.5);
+            assert.strictEqual(res.payload.error, undefined, String(res.payload.error));
+            assert.strictEqual(res.payload.bingo, true, JSON.stringify(res.payload.wrongValues));
+            await readsInclude({ pressure: 3.5 }, 'pressure = 3.5');
+        });
+
+        await run('S7 Out multi-item write with odd-length items (BYTE, BYTE, BYTE, bit, INT) lands on the right addresses', async () => {
+            const res = await write(['b1', 'b2', 'b3', 'flag', 'counter2'], [0x11, 0x22, 0x33, true, -1234]);
+            assert.strictEqual(res.payload.error, undefined, String(res.payload.error));
+            assert.strictEqual(res.payload.bingo, true, JSON.stringify(res.payload.wrongValues));
+            await readsInclude({ b1: 0x11, b2: 0x22, b3: 0x33, flag: true, counter2: -1234 }, 'multi-item values');
+            // untouched neighbours must keep their values (no shifted bytes)
+            assert.strictEqual(reads.pressure, 3.5);
         });
     } finally {
         await RED.stop().catch(() => {});
