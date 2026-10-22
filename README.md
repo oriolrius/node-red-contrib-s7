@@ -165,7 +165,7 @@ Manually triggers an immediate PLC read cycle
 #### `setvartable`
 Dynamically updates the variable table during runtime. Supports both array and text formats.
 
-**Array Format (Legacy):**
+**Array Format (`msg.vartable` or `msg.payload`):**
 ```json
 {
   "function": "setvartable",
@@ -175,6 +175,19 @@ Dynamically updates the variable table during runtime. Supports both array and t
   ]
 }
 ```
+
+Since v4.4.0 the same array can also come in `msg.payload` (for example straight from a File, HTTP or database node), or in `msg.payload.vartable`, which is what `setvartable` itself outputs, so its result can be fed back or saved and reloaded as is:
+```json
+{
+  "function": "setvartable",
+  "payload": [
+    {"name": "temperature", "addr": "DB1,REAL0"},
+    {"name": "pressure", "addr": "DB1,REAL4"}
+  ]
+}
+```
+
+The first source present is used, in this order: `msg.vartable`, `msg.payload` (array), `msg.payload.vartable`, `msg.payload` (text). Entries without a name or an address are skipped with a warning that lists them; if no entry is valid, the table is not changed and an error is reported.
 
 **Text Format (New in v4.2.0):**
 ```json
@@ -186,7 +199,7 @@ Dynamically updates the variable table during runtime. Supports both array and t
 
 **Text Format Details:**
 - Format: `address;name` (one variable per line)
-- Separator: Semicolon (`;`) between address and name
+- Separator: the first semicolon (`;`) separates address and name
 - Line breaks: Use `\n` or actual newlines
 - Whitespace: Automatically trimmed
 - Empty lines: Ignored
@@ -228,7 +241,7 @@ The `setvartable` function provides powerful runtime reconfiguration capabilitie
 
 ### How It Works
 
-1. **Variable Table Update**: The S7 Control node accepts a new variable table via `msg.vartable` (array format) or `msg.payload` (text format)
+1. **Variable Table Update**: The S7 Control node accepts a new variable table via `msg.vartable` or `msg.payload` (array format), `msg.payload.vartable` (the output of a previous `setvartable`), or `msg.payload` (text format)
 2. **Automatic Propagation**: All S7 In nodes connected to the same endpoint automatically adapt to the new variables
 3. **Event-Driven Synchronization**: Uses the internal `__VARS_CHANGED__` event system to notify all nodes
 4. **Seamless Operation**: No interruption to existing flows or data processing
@@ -372,9 +385,9 @@ return msg;
 - **Complete Replacement**: The `setvartable` function completely replaces the existing variable table, not just adding to it
 - **S7 In Node Adaptation**: Existing S7 In nodes automatically adapt to new variables, but nodes configured for specific variables that no longer exist will stop receiving data
 - **Performance**: Variable table updates are immediate, but the first read cycle with new variables may take slightly longer
-- **Error Handling**: Invalid addresses or malformed variable objects will cause the operation to fail and return an error
-- **Text Format Validation**: Text format requires `address;name` per line with exactly one semicolon separator
-- **Backward Compatibility**: Both array format (`msg.vartable`) and text format (`msg.payload`) are supported
+- **Error Handling**: Entries or lines without a name or an address are skipped with a warning; if none is valid, the operation fails with an error and the table is not changed
+- **Text Format Validation**: Text format requires `address;name` per line; the first semicolon separates address and name
+- **Backward Compatibility**: The array format (`msg.vartable`) and the text format (`msg.payload`) work as before
 
 ### Best Practices
 
