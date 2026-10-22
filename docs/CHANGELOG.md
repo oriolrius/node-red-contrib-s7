@@ -1,3 +1,10 @@
+Version: 4.4.1
+------------
+ - **FIX**: Multi-item writes (S7 Out with arrays in `msg.variable` / `msg.payload`) failed with PLC error 0x8104 on installs that got `@st-one-io/nodes7` 1.1.2, which dropped the S7comm fill bytes (st-one-io/nodes7#16)
+ - **FIX**: Writing many booleans/bytes at once no longer exceeds the PDU (st-one-io/nodes7#8), and reading many odd-length variables no longer fails with 0x8500 (st-one-io/nodes7#17)
+ - **DEPENDENCY**: Uses `@oriolrius/nodes7` 1.1.3, a fork of `@st-one-io/nodes7` 1.1.2 with these fixes (same API), until they are released upstream
+ - **TESTS**: The E2E simulator behaves like a real CPU (applies every item of a multi-item write, requires the fill bytes, enforces the PDU size); S7 Out single and multi-item writes are tested on Node-RED 3, 4 and 5
+
 Version: 4.4.0
 ------------
  - **FEATURE**: S7 Control `setvartable` accepts the variable table as an array in `msg.payload`, or in `msg.payload.vartable` (its own output), besides `msg.vartable` and the text format
