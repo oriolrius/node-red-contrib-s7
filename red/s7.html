@@ -222,6 +222,9 @@
 </script>
 
 <script type="text/javascript">
+(function() {
+"use strict";
+
 
 	function validateS7Address(address) {
 
@@ -300,7 +303,17 @@
 		return true;
 	}
 
+	// Rack and slot only matter in rack/slot mode
+	var validateNumber = RED.validators.number();
+	function validateRackSlot(v, opt) {
+		if (this && this.connmode === "tsap") return true;
+		return validateNumber.call(this, v, opt);
+	}
+
+	// TSAP fields only matter in TSAP mode; flows saved or imported without them must not fail validation
 	function validateTSAP(num) {
+		if (this && this.connmode && this.connmode !== "tsap") return true;
+		if (num === undefined || num === null) return false;
 		num = num.toString();
 		if (num.length != 2) return false;
 		if (!(/^[0-9a-fA-F]+$/.test(num))) return false;
@@ -325,11 +338,11 @@
 			},
 			rack: {
 				value: "0",
-				validate: RED.validators.number()
+				validate: validateRackSlot
 			},
 			slot: {
 				value: "1",
-				validate: RED.validators.number()
+				validate: validateRackSlot
 			},
 			localtsaphi: {
 				value: "01",
@@ -815,6 +828,8 @@
 			});
 		}
 	});
+
+})();
 </script>
 
 <!-- ######################################################################################## -->
@@ -1007,6 +1022,9 @@ Output (separate messages):
 </script>
 
 <script type="text/javascript">
+(function() {
+"use strict";
+
 	RED.nodes.registerType('s7 in', {
 		category: 'plc',
 		defaults: {
@@ -1105,6 +1123,8 @@ Output (separate messages):
 			modeList.change();
 		}
 	});
+
+})();
 </script>
 
 <!-- ######################################################################################## -->
@@ -1304,6 +1324,9 @@ Result:
 </script>
 
 <script type="text/javascript">
+(function() {
+"use strict";
+
 	RED.nodes.registerType('s7 out', {
 		category: 'plc',
 		defaults: {
@@ -1389,6 +1412,8 @@ Result:
 			updateVarList(self.endpoint);
 		}
 	});
+
+})();
 </script>
 
 <!-- ######################################################################################## -->
@@ -1667,6 +1692,9 @@ DB1,REAL4;speed_setpoint</pre>
 </script>
 
 <script type="text/javascript">
+(function() {
+"use strict";
+
 	RED.nodes.registerType('s7 control', {
 		category: 'plc',
 		defaults: {
@@ -1705,4 +1733,6 @@ DB1,REAL4;speed_setpoint</pre>
 			return this.name ? "node_label_italic" : "";
 		}
 	});
+
+})();
 </script>
