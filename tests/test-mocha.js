@@ -181,16 +181,16 @@ describe('@oriolrius/node-red-contrib-s7 Module Tests', function() {
     });
 
     describe('Module Dependencies', function() {
-        it('should have @st-one-io/nodes7 dependency available', function() {
+        it('should have @oriolrius/nodes7 dependency available', function() {
             const packagePath = path.join(__dirname, '..', 'package.json');
             const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
             
-            expect(packageJson.dependencies).to.have.property('@st-one-io/nodes7');
+            expect(packageJson.dependencies).to.have.property('@oriolrius/nodes7');
         });
 
-        it('should be able to require @st-one-io/nodes7', function() {
+        it('should be able to require @oriolrius/nodes7', function() {
             try {
-                const nodes7 = require('@st-one-io/nodes7');
+                const nodes7 = require('@oriolrius/nodes7');
                 expect(nodes7).to.not.be.undefined;
             } catch (error) {
                 // If the dependency is not installed, the test should still pass

@@ -2,9 +2,6 @@
     "name": "@oriolrius/node-red-contrib-s7",
     "version": "4.4.0",
     "description": "A Node-RED node to interact with Siemens S7 PLCs",
-    "dependencies": {
-        "@st-one-io/nodes7": "^1.1.0"
-    },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/oriolrius/node-red-contrib-s7.git"
@@ -40,5 +37,8 @@
         }
     },
     "author": "Oriol Rius",
-    "license": "GPL-3.0-or-later"
+    "license": "GPL-3.0-or-later",
+    "dependencies": {
+        "@oriolrius/nodes7": "^1.1.3"
+    }
 }

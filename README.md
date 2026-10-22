@@ -47,6 +47,8 @@ npm install @oriolrius/node-red-contrib-s7
 - Node-RED 3.x, 4.x or 5.x (every release is tested end to end on Node-RED 3.1, 4.1 and 5.0)
 - The Node.js version your Node-RED needs (Node-RED 5 requires Node.js 22.9 or later)
 
+The PLC protocol is handled by [`@oriolrius/nodes7`](https://github.com/oriolrius/nodes7), a fork of `@st-one-io/nodes7` with fixes for multi-item writes and large reads that are still open upstream ([#16](https://github.com/st-one-io/nodes7/issues/16), [#8](https://github.com/st-one-io/nodes7/issues/8), [#17](https://github.com/st-one-io/nodes7/issues/17)).
+
 ## Quick Start
 
 1. **Add an S7 Endpoint**: Configure your PLC connection details (IP, rack/slot, variables)

@@ -37,7 +37,7 @@ var { parseVarTableInput } = require('../src/vartable.js');
 module.exports = function (RED) {
     "use strict";
 
-    var { S7Endpoint: S7EndpointClass, S7ItemGroup } = require('@st-one-io/nodes7');
+    var { S7Endpoint: S7EndpointClass, S7ItemGroup } = require('@oriolrius/nodes7');
     var EventEmitter = require('events').EventEmitter;
 
     // ---------- Discovery Endpoints ----------
