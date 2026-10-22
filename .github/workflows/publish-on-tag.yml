@@ -5,9 +5,36 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: read
+
 jobs:
-  publish:
+  test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: ['18', '22', '24']
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm test
+
+  e2e:
+    # setvartable against a simulated S7 PLC (python-snap7) on every supported Node-RED major
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-red: ['3', '4', '5']
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -15,16 +42,47 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: '24'
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v6
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests (if any)
-        run: npm test --if-present
+      - name: Install Node-RED ${{ matrix.node-red }}
+        run: npm install --prefix "$RUNNER_TEMP/node-red" --no-audit --no-fund "node-red@${{ matrix.node-red }}"
+
+      - name: Run E2E test
+        run: npm run test:e2e
+        env:
+          NODE_RED_DIR: ${{ runner.temp }}/node-red/node_modules/node-red
+
+  publish:
+    needs: [test, e2e]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # npm Trusted Publishing (OIDC): no NPM_TOKEN; provenance is attached automatically
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Check npm supports trusted publishing (>= 11.5.1)
+        run: npx --yes semver@7 -r '>=11.5.1' "$(npm -v)"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check the tag matches package.json
+        run: test "v$(node -p "require('./package.json').version")" = "$GITHUB_REF_NAME"
 
       - name: Publish to npm
-        run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public
