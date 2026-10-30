@@ -1,3 +1,9 @@
+Version: 4.4.2
+------------
+ - **FIX**: Overlapping read variables no longer lose their first byte at a packet split boundary caused by unconditional fill-byte reservation
+ - **FIX**: Odd-length writes that exactly fit the negotiated PDU are accepted; padding is counted only between items
+ - **DEPENDENCY**: Requires `@oriolrius/nodes7` ^1.1.4 with the corrected fill-byte accounting (st-one-io/nodes7#19)
+
 Version: 4.4.1
 ------------
  - **FIX**: Multi-item writes (S7 Out with arrays in `msg.variable` / `msg.payload`) failed with PLC error 0x8104 on installs that got `@st-one-io/nodes7` 1.1.2, which dropped the S7comm fill bytes (st-one-io/nodes7#16)
