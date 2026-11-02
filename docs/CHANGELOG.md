@@ -1,3 +1,8 @@
+Version: 4.4.3
+------------
+ - **FIX**: A read variable that starts a few bytes before the point where a long variable is split across packets no longer returns zeros in its first bytes (st-one-io/nodes7#20)
+ - **DEPENDENCY**: Requires `@oriolrius/nodes7` ^1.1.5
+
 Version: 4.4.2
 ------------
  - **FIX**: Overlapping read variables no longer lose their first byte at a packet split boundary caused by unconditional fill-byte reservation
